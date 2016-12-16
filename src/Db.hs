@@ -31,8 +31,18 @@ db = "cv.sqlite"
 
 share [mkPersist sqlSettings, mkMigrate "migrateTables"] [persistLowerCase|
 Resume json
-  title Text
-  basics Basic
+  title       Text
+  basics      Basic
+  work        [Work] Maybe
+  volunteer   [Volunteer] Maybe
+  education   [Education] Maybe
+  award       [Award] Maybe
+  publication [Publication] Maybe
+  skills      [Skill]
+  languages   [Language] Maybe
+  interests   [Interest] Maybe
+  references  [Reference] Maybe
+  deriving Show
 Basic json
   name     Text
   label    Text
@@ -41,8 +51,8 @@ Basic json
   phone    Text
   website  Text
   summary  Text
-  profiles [BasicProfile]
-  location BasicLocatioN Maybe
+  profiles  [BasicProfile] Maybe
+  location  BasicLocatioN
   deriving Show
 BasicLocatioN json
   address     Text
@@ -57,53 +67,39 @@ BasicProfile json
   url      Text
   deriving Show
 Work json
-  resumeId  ResumeId
   company   Text
   position  Text
   website   Text
   startDate UTCTime
   endDate   UTCTime Maybe
   summary   Text
-  deriving Show
-WorkHighlight json
-  workId WorkId
-  text   Text
+  highlights [Text]
   deriving Show
 Volunteer json
-  resumeId     ResumeId
   organization Text
   position     Text
   website      Text
   startDate    UTCTime
   endDate      UTCTime Maybe
   summary      Text
-  deriving Show
-VolunteerHighlight json
-  volunteerId VolunteerId
-  text        Text
+  highlights   [Text]
   deriving Show
 Education json
-  resumeId    ResumeId
   institution Text
   area        Text
   studyType   Text
   startDate   UTCTime
   endDate     UTCTime Maybe
   gpa         Text
-  deriving Show
-EducationCourse json
-  educationId EducationId
-  text        Text
+  courses     [Text]
   deriving Show
 Award json
-  resumeId ResumeId
   title    Text
   date     UTCTime
   awarder  Text
   summary  Text
   deriving Show
 Publication json
-  resumeId    ResumeId
   name        Text
   publisher   Text
   releaseDate UTCTime
@@ -111,28 +107,19 @@ Publication json
   summary     Text
   deriving Show
 Skill json
-  resumeId ResumeId
   name     Text
   level    Text
-  deriving Show
-SkillKeyword json
-  skillId SkillId
-  keyword Text
+  keywords [Text] Maybe
   deriving Show
 Language json
-  name Text
+  name  Text
   level Text
   deriving Show
 Interest json
-  resumeId ResumeId
   name Text
-  deriving Show
-InterestKeyword json
-  interestId InterestId
-  keyword Text
+  keywords [Text]
   deriving Show
 Reference json
-  resumeId ResumeId
   name Text
   reference Text
   deriving Show
