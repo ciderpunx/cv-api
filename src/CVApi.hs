@@ -12,16 +12,10 @@ module CVApi where
 import Control.Lens
 import Control.Monad.Trans
 import Control.Monad.Trans.Except (ExceptT, runExceptT)
-import Data.Aeson
-import Data.Int (Int64)
-import Data.Text (Text)
-import Data.Time
-import Data.Time.Format (formatTime)
 import Database.Persist
 import Database.Persist.Sql
 import Database.Persist.Sqlite (runSqlite, runMigration)
 import Database.Persist.TH (mkPersist, mkMigrate, persistLowerCase, share, sqlSettings)
-import GHC.Generics
 import Network.Wai
 import Network.Wai.Handler.Warp
 import Servant
