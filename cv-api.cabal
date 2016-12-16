@@ -19,7 +19,9 @@ library
                      , Db
   build-depends:       base >= 4.7 && < 5
                      , aeson
+                     , lens
                      , monad-logger
+                     , mtl
                      , time
                      , persistent
                      , persistent-sqlite

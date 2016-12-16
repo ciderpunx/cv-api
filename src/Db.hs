@@ -13,6 +13,8 @@
 
 module Db where
 
+import Control.Monad.Trans
+import Control.Monad.Trans.Except (ExceptT, runExceptT)
 import Data.Aeson
 import Data.Int (Int64)
 import Data.Text (Text)
@@ -135,6 +137,126 @@ Reference json
 |]
 
 type DbKey = BackendKey SqlBackend
+
+createResume :: Resume -> IO (Key Resume)
+createResume r =
+    runSqlite db (insert r :: SqlPersistM (Key Resume))
+
+retrieveResume :: DbKey -> IO (Maybe Resume)
+retrieveResume k =
+    runSqlite db (get (ResumeKey k) :: SqlPersistM (Maybe Resume))
+
+updateResume :: DbKey -> Resume -> IO ()
+updateResume k r  =
+    runSqlite db (replace (ResumeKey k) r :: SqlPersistM ())
+
+deleteResume :: DbKey -> IO ()
+deleteResume k =
+    runSqlite db (delete (ResumeKey k) :: SqlPersistM ())
+
+listResumes = undefined -- and will remain so for now
+
+createBasic = undefined
+retrieveBasic = undefined
+updateBasic = undefined
+deleteBasic = undefined
+listBasics = undefined
+
+createBasicLocation = undefined
+retrieveBasicLocation = undefined
+updateBasicLocation = undefined
+deleteBasicLocation = undefined
+listBasicLocations = undefined
+
+createBasicProfile = undefined
+retrieveBasicProfile = undefined
+updateBasicProfile = undefined
+deleteBasicProfile = undefined
+listBasicProfiles = undefined
+
+createWork = undefined
+retrieveWork = undefined
+updateWork = undefined
+deleteWork = undefined
+listWorks = undefined
+
+createWorkHighlight = undefined
+retrieveWorkHighlight = undefined
+updateWorkHighlight = undefined
+deleteWorkHighlight = undefined
+listWorkHighlights = undefined
+
+createVolunteer = undefined
+retrieveVolunteer = undefined
+updateVolunteer = undefined
+deleteVolunteer = undefined
+listVolunteers = undefined
+
+createVolunteerHighlight = undefined
+retrieveVolunteerHighlight = undefined
+updateVolunteerHighlight = undefined
+deleteVolunteerHighlight = undefined
+listVolunteerHighlights = undefined
+
+createEducation = undefined
+retrieveEducation = undefined
+updateEducation = undefined
+deleteEducation = undefined
+listEducations = undefined
+
+createEducationCourse = undefined
+retrieveEducationCourse = undefined
+updateEducationCourse = undefined
+deleteEducationCourse = undefined
+listEducationCourses = undefined
+
+createAward = undefined
+retrieveAward = undefined
+updateAward = undefined
+deleteAward = undefined
+listAwards = undefined
+
+createPublication = undefined
+retrievePublication = undefined
+updatePublication = undefined
+deletePublication = undefined
+listPublications = undefined
+
+createSkill = undefined
+retrieveSkill = undefined
+updateSkill = undefined
+deleteSkill = undefined
+listSkills = undefined
+
+createSkillKeyword = undefined
+retrieveSkillKeyword = undefined
+updateSkillKeyword = undefined
+deleteSkillKeyword = undefined
+listSkillKeywords = undefined
+
+createLanguage = undefined
+retrieveLanguage = undefined
+updateLanguage = undefined
+deleteLanguage = undefined
+listLanguages = undefined
+
+createInterest = undefined
+retrieveInterest = undefined
+updateInterest = undefined
+deleteInterest = undefined
+listInterests = undefined
+
+createInterestKeyword = undefined
+retrieveInterestKeyword = undefined
+updateInterestKeyword = undefined
+deleteInterestKeyword = undefined
+listInterestKeywords = undefined
+
+createReference = undefined
+retrieveReference = undefined
+updateReference = undefined
+deleteReference = undefined
+listReferences = undefined
 
 migrateResumeDb:: IO ()
 migrateResumeDb =
