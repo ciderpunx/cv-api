@@ -25,13 +25,15 @@ import Database.Persist.Sqlite (runSqlite, runMigration)
 import Database.Persist.TH (mkPersist, mkMigrate, persistLowerCase, share, sqlSettings)
 import GHC.Generics
 
+-- http://www.yesodweb.com/book/persistent#persistent_custom_fields <- custom fields for URLs, emails and such
+
 db = "cv.sqlite"
 
 share [mkPersist sqlSettings, mkMigrate "migrateTables"] [persistLowerCase|
 Resume json
   title Text
+  basics Basic
 Basic json
-  resumeId ResumeId
   name     Text
   label    Text
   picture  Text
@@ -39,9 +41,10 @@ Basic json
   phone    Text
   website  Text
   summary  Text
+  profiles [BasicProfile]
+  location BasicLocatioN Maybe
   deriving Show
-BasicLocation json
-  basicId     BasicId
+BasicLocatioN json
   address     Text
   postalCode  Text
   city        Text
@@ -49,7 +52,6 @@ BasicLocation json
   region      Text
   deriving Show
 BasicProfile json
-  basicId  BasicId
   network  Text
   profile  Text
   url      Text
@@ -145,6 +147,7 @@ createResume r =
 retrieveResume :: DbKey -> IO (Maybe Resume)
 retrieveResume k =
     runSqlite db (get (ResumeKey k) :: SqlPersistM (Maybe Resume))
+
 
 updateResume :: (DbKey, Resume) -> IO ()
 updateResume (k, r)  =
