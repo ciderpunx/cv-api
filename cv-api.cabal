@@ -19,6 +19,7 @@ library
                      , Db
   build-depends:       base >= 4.7 && < 5
                      , aeson
+                     , http-client
                      , lens
                      , monad-logger
                      , mtl

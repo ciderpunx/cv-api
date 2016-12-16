@@ -146,8 +146,8 @@ retrieveResume :: DbKey -> IO (Maybe Resume)
 retrieveResume k =
     runSqlite db (get (ResumeKey k) :: SqlPersistM (Maybe Resume))
 
-updateResume :: DbKey -> Resume -> IO ()
-updateResume k r  =
+updateResume :: (DbKey, Resume) -> IO ()
+updateResume (k, r)  =
     runSqlite db (replace (ResumeKey k) r :: SqlPersistM ())
 
 deleteResume :: DbKey -> IO ()
