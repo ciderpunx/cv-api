@@ -16,9 +16,11 @@ cabal-version:       >=1.10
 library
   hs-source-dirs:      src
   exposed-modules:     Lib
+                     , Db
   build-depends:       base >= 4.7 && < 5
                      , aeson
                      , monad-logger
+                     , time
                      , persistent
                      , persistent-sqlite
                      , persistent-template
