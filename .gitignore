@@ -1,0 +1,4 @@
+.*.swp
+.swp
+.stack-work
+src/PrivateAuth.hs
