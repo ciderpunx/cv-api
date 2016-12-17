@@ -12,7 +12,6 @@
 
 module CVApi where
 
--- import Control.Lens
 import Control.Monad.Trans
 import Control.Monad.Trans.Except (ExceptT, runExceptT)
 import Database.Persist
@@ -20,12 +19,13 @@ import Database.Persist.Sql
 import Database.Persist.Sqlite (runSqlite, runMigration)
 import Database.Persist.TH (mkPersist, mkMigrate, persistLowerCase, share, sqlSettings)
 import Data.Text (Text)
-import GHC.Generics                     (Generic)
+import qualified Data.Text.Encoding as E
+import GHC.Generics (Generic)
 import Network.Wai
 import Network.Wai.Handler.Warp
 import Servant
-import Servant.API.BasicAuth            (BasicAuthData (BasicAuthData))
-import Servant.API.Experimental.Auth    (AuthProtect)
+import Servant.API.BasicAuth (BasicAuthData (BasicAuthData))
+import Servant.API.Experimental.Auth (AuthProtect)
 import Servant.Client
 import Servant.Docs
 import Servant.Server.Experimental.Auth (AuthHandler, AuthServerData, mkAuthHandler)
@@ -38,19 +38,6 @@ import PrivateAuth
 newtype User = User { userName :: Text }
   deriving (Eq, Show)
 
---data BasicAuthResult usr
---  = Unauthorized
---  | BadPassword
---  | NoSuchUser
---  | Authorized usr
---  deriving (Eq, Show, Read, Generic, Typeable, Functor)
---
---newtype BasicAuthCheck usr = BasicAuthCheck
---  { unBasicAuthCheck :: BasicAuthData
---                     -> IO (BasicAuthResult usr)
---  }
---  deriving (Generic, Typeable, Functor)
-
 type PublicAPI =
          Get '[JSON] [Resume]
     :<|> Capture "id" DbKey :> Get '[JSON] (Maybe Resume)
@@ -61,17 +48,20 @@ type PrivateAPI =
     :<|>  ReqBody '[JSON] Resume :> Put '[JSON] (Key Resume)
 
 type ResumeAPI =
-          "resume" :> PublicAPI
-    :<|>  "resume" :> BasicAuth "CV-API" User :> PrivateAPI
-
---main :: IO ()
---main = run 8081 app
+          "cv" :> PublicAPI
+    :<|>  "cv" :> BasicAuth "CV-API" User :> PrivateAPI
 
 main :: IO ()
 main = run 8081 ( serveWithContext resumeAPI
                                    resumeServerContext
                                    resumeServer
                 )
+
+resumeAPI :: Proxy ResumeAPI
+resumeAPI = Proxy
+
+resumeServerContext :: Context (BasicAuthCheck User : '[])
+resumeServerContext = authCheck :. EmptyContext
 
 resumeServer :: Server ResumeAPI
 resumeServer =
@@ -90,15 +80,6 @@ authCheck :: BasicAuthCheck User
 authCheck =
   let check (BasicAuthData username password) =
         if (username,password) `elem` validUsers
-        then return (Authorized (User "servant"))
+        then return (Authorized (User $ E.decodeUtf8 username))
         else return Unauthorized
   in BasicAuthCheck check
-
-resumeServerContext :: Context (BasicAuthCheck User : '[])
-resumeServerContext = authCheck :. EmptyContext
-
---app :: Application
---app = serve resumeAPI resumeServer
-
-resumeAPI :: Proxy ResumeAPI
-resumeAPI = Proxy
