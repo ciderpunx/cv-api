@@ -1,4 +1,5 @@
 {-# LANGUAGE DataKinds                  #-}
+{-# LANGUAGE DeriveGeneric              #-}
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE FlexibleInstances          #-}
 {-# LANGUAGE GADTs                      #-}
@@ -6,46 +7,98 @@
 {-# LANGUAGE OverloadedStrings          #-}
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE TypeOperators              #-}
+{-# LANGUAGE ScopedTypeVariables        #-}
+{-# LANGUAGE UndecidableInstances       #-}
 
 module CVApi where
 
-import Control.Lens
+-- import Control.Lens
 import Control.Monad.Trans
 import Control.Monad.Trans.Except (ExceptT, runExceptT)
 import Database.Persist
 import Database.Persist.Sql
 import Database.Persist.Sqlite (runSqlite, runMigration)
 import Database.Persist.TH (mkPersist, mkMigrate, persistLowerCase, share, sqlSettings)
+import Data.Text (Text)
+import GHC.Generics                     (Generic)
 import Network.Wai
 import Network.Wai.Handler.Warp
 import Servant
+import Servant.API.BasicAuth            (BasicAuthData (BasicAuthData))
+import Servant.API.Experimental.Auth    (AuthProtect)
 import Servant.Client
 import Servant.Docs
+import Servant.Server.Experimental.Auth (AuthHandler, AuthServerData, mkAuthHandler)
+import Servant.Server.Experimental.Auth()
 import qualified Network.HTTP.Client as C
 
 import Db
+import PrivateAuth
+
+newtype User = User { userName :: Text }
+  deriving (Eq, Show)
+
+--data BasicAuthResult usr
+--  = Unauthorized
+--  | BadPassword
+--  | NoSuchUser
+--  | Authorized usr
+--  deriving (Eq, Show, Read, Generic, Typeable, Functor)
+--
+--newtype BasicAuthCheck usr = BasicAuthCheck
+--  { unBasicAuthCheck :: BasicAuthData
+--                     -> IO (BasicAuthResult usr)
+--  }
+--  deriving (Generic, Typeable, Functor)
+
+type PublicAPI =
+         Get '[JSON] [Resume]
+    :<|> Capture "id" DbKey :> Get '[JSON] (Maybe Resume)
+
+type PrivateAPI =
+          Capture "id" DbKey :> DeleteNoContent '[JSON] ()
+    :<|>  ReqBody '[JSON] (DbKey, Resume) :> PostNoContent '[JSON] ()
+    :<|>  ReqBody '[JSON] Resume :> Put '[JSON] (Key Resume)
 
 type ResumeAPI =
-         "resume" :> Get '[JSON] [Resume]
-    :<|> "resume" :> ReqBody '[JSON] Resume :> Put '[JSON] (Key Resume)
-    :<|> "resume" :> Capture "id" DbKey     :> Get '[JSON] (Maybe Resume)
-    :<|> "resume" :> ReqBody '[JSON] (DbKey, Resume)
-                                            :> PostNoContent '[JSON] ()
-    :<|> "resume" :> Capture "id" DbKey     :> DeleteNoContent '[JSON] ()
+          "resume" :> PublicAPI
+    :<|>  "resume" :> BasicAuth "CV-API" User :> PrivateAPI
+
+--main :: IO ()
+--main = run 8081 app
 
 main :: IO ()
-main = run 8081 app
+main = run 8081 ( serveWithContext resumeAPI
+                                   resumeServerContext
+                                   resumeServer
+                )
 
 resumeServer :: Server ResumeAPI
 resumeServer =
-       liftIO listResumes
-  :<|> liftIO . createResume
-  :<|> liftIO . retrieveResume
-  :<|> liftIO . updateResume
-  :<|> liftIO . deleteResume
+  let publicAPIHandler = (
+             liftIO listResumes
+        :<|> liftIO . retrieveResume
+           )
+      privateAPIHandler (user :: User) =
+             liftIO . deleteResume
+        :<|> liftIO . updateResume
+        :<|> liftIO . createResume
+  in publicAPIHandler
+      :<|> privateAPIHandler
 
-app :: Application
-app = serve resumeAPI resumeServer
+authCheck :: BasicAuthCheck User
+authCheck =
+  let check (BasicAuthData username password) =
+        if (username,password) `elem` validUsers
+        then return (Authorized (User "servant"))
+        else return Unauthorized
+  in BasicAuthCheck check
+
+resumeServerContext :: Context (BasicAuthCheck User : '[])
+resumeServerContext = authCheck :. EmptyContext
+
+--app :: Application
+--app = serve resumeAPI resumeServer
 
 resumeAPI :: Proxy ResumeAPI
 resumeAPI = Proxy
