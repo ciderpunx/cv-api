@@ -39,40 +39,40 @@ newtype User = User { userName :: Text }
   deriving (Eq, Show)
 
 type PublicAPI =
-         Get '[JSON] [Resume]
-    :<|> Capture "id" DbKey :> Get '[JSON] (Maybe Resume)
+         Get '[JSON] [CV]
+    :<|> Capture "id" DbKey :> Get '[JSON] (Maybe CV)
 
 type PrivateAPI =
           Capture "id" DbKey :> DeleteNoContent '[JSON] ()
-    :<|>  ReqBody '[JSON] (DbKey, Resume) :> PostNoContent '[JSON] ()
-    :<|>  ReqBody '[JSON] Resume :> Put '[JSON] (Key Resume)
+    :<|>  ReqBody '[JSON] (DbKey, CV) :> PostNoContent '[JSON] ()
+    :<|>  ReqBody '[JSON] CV :> Put '[JSON] (Key CV)
 
-type ResumeAPI =
+type CVAPI =
           "cv" :> PublicAPI
     :<|>  "cv" :> BasicAuth "CV-API" User :> PrivateAPI
 
 main :: IO ()
-main = run 8081 ( serveWithContext resumeAPI
-                                   resumeServerContext
-                                   resumeServer
+main = run 8081 ( serveWithContext cvAPI
+                                   cvServerContext
+                                   cvServer
                 )
 
-resumeAPI :: Proxy ResumeAPI
-resumeAPI = Proxy
+cvAPI :: Proxy CVAPI
+cvAPI = Proxy
 
-resumeServerContext :: Context (BasicAuthCheck User : '[])
-resumeServerContext = authCheck :. EmptyContext
+cvServerContext :: Context (BasicAuthCheck User : '[])
+cvServerContext = authCheck :. EmptyContext
 
-resumeServer :: Server ResumeAPI
-resumeServer =
+cvServer :: Server CVAPI
+cvServer =
   let publicAPIHandler = (
-             liftIO listResumes
-        :<|> liftIO . retrieveResume
+             liftIO listCVs
+        :<|> liftIO . retrieveCV
            )
       privateAPIHandler (user :: User) =
-             liftIO . deleteResume
-        :<|> liftIO . updateResume
-        :<|> liftIO . createResume
+             liftIO . deleteCV
+        :<|> liftIO . updateCV
+        :<|> liftIO . createCV
   in publicAPIHandler
       :<|> privateAPIHandler
 

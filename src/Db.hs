@@ -26,7 +26,7 @@ db = "cv.sqlite"
 -- But we don't have to fiddle round with writing our own instances so that basicName gets displayed 
 -- as name in our output. It may be I should fix this at some point.
 share [mkPersist sqlSettings, mkMigrate "migrateTables"] [persistLowerCase|
-Resume json
+CV json
   basics      Basic
   work        [Work] Maybe
   volunteer   [Volunteer] Maybe
@@ -122,27 +122,27 @@ Reference json
 
 type DbKey = BackendKey SqlBackend
 
-createResume :: Resume -> IO (Key Resume)
-createResume r =
-    runSqlite db (insert r :: SqlPersistM (Key Resume))
+createCV :: CV -> IO (Key CV)
+createCV r =
+    runSqlite db (insert r :: SqlPersistM (Key CV))
 
-retrieveResume :: DbKey -> IO (Maybe Resume)
-retrieveResume k =
-    runSqlite db (get (ResumeKey k) :: SqlPersistM (Maybe Resume))
+retrieveCV :: DbKey -> IO (Maybe CV)
+retrieveCV k =
+    runSqlite db (get (CVKey k) :: SqlPersistM (Maybe CV))
 
-updateResume :: (DbKey, Resume) -> IO ()
-updateResume (k, r)  =
-    runSqlite db (replace (ResumeKey k) r :: SqlPersistM ())
+updateCV :: (DbKey, CV) -> IO ()
+updateCV (k, r)  =
+    runSqlite db (replace (CVKey k) r :: SqlPersistM ())
 
-deleteResume :: DbKey -> IO ()
-deleteResume k =
-    runSqlite db (delete (ResumeKey k) :: SqlPersistM ())
+deleteCV :: DbKey -> IO ()
+deleteCV k =
+    runSqlite db (delete (CVKey k) :: SqlPersistM ())
 
-listResumes :: IO [Resume]
-listResumes = do
-    es <- runSqlite db (selectList [] [] :: SqlPersistM [Entity Resume])
+listCVs :: IO [CV]
+listCVs = do
+    es <- runSqlite db (selectList [] [] :: SqlPersistM [Entity CV])
     return (map entityVal es)
 
-migrateResumeDb:: IO ()
-migrateResumeDb =
+migrateCVDb:: IO ()
+migrateCVDb =
     runSqlite db $ runMigration migrateTables
