@@ -25,7 +25,6 @@ import qualified Network.HTTP.Client as C
 
 import Db
 
--- API type
 type ResumeAPI =
          "resume" :> Get '[JSON] [Resume]
     :<|> "resume" :> ReqBody '[JSON] Resume :> Put '[JSON] (Key Resume)
@@ -34,11 +33,9 @@ type ResumeAPI =
                                             :> PostNoContent '[JSON] ()
     :<|> "resume" :> Capture "id" DbKey     :> DeleteNoContent '[JSON] ()
 
--- main: run our server
 main :: IO ()
 main = run 8081 app
 
--- API server implementation
 resumeServer :: Server ResumeAPI
 resumeServer =
        liftIO listResumes
@@ -52,4 +49,3 @@ app = serve resumeAPI resumeServer
 
 resumeAPI :: Proxy ResumeAPI
 resumeAPI = Proxy
-
