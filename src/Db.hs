@@ -6,6 +6,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
 {-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE DuplicateRecordFields     #-}
 {-# LANGUAGE QuasiQuotes                #-}
 {-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TypeFamilies               #-}
@@ -13,122 +14,41 @@
 
 module Db where
 
+import Data.Aeson
 import Data.Text (Text)
 import Data.Time
 import Database.Persist
 import Database.Persist.Sql
 import Database.Persist.Sqlite (runSqlite, runMigration)
 import Database.Persist.TH (mkPersist, mkMigrate, persistLowerCase, share, sqlSettings)
+import GHC.Generics
+import Control.Monad (mzero)
 
-db = "cv.sqlite"
+import DbTypes
 
--- Note that by letting persistent handle generating our types we end up with some unnecessary tables
--- But we don't have to fiddle round with writing our own instances so that basicName gets displayed 
--- as name in our output. It may be I should fix this at some point.
-share [mkPersist sqlSettings, mkMigrate "migrateTables"] [persistLowerCase|
-CV json
-  basics      Basic
-  work        [Work] Maybe
-  volunteer   [Volunteer] Maybe
-  education   [Education] Maybe
-  award       [Award] Maybe
-  publication [Publication] Maybe
-  skills      [Skill]
-  languages   [Language] Maybe
-  interests   [Interest] Maybe
-  references  [Reference] Maybe
-  deriving Show
-Basic json
-  name     Text
-  label    Text
-  picture  Text
-  email    Text
-  phone    Text
-  website  Text
-  summary  Text
-  profiles  [BasicProfile] Maybe
-  location  BasicLocatioN
-  deriving Show
-BasicLocatioN json
-  address     Text
-  postalCode  Text
-  city        Text
-  countryCode Text
-  region      Text
-  deriving Show
-BasicProfile json
-  network  Text
-  username Text
-  url      Text
-  deriving Show
-Work json
-  company   Text
-  position  Text
-  website   Text
-  startDate Day
-  endDate   Day Maybe
-  summary   Text
-  highlights [Text]
-  deriving Show
-Volunteer json
-  organization Text
-  position     Text
-  website      Text
-  startDate    Day
-  endDate      Day Maybe
-  summary      Text
-  highlights   [Text]
-  deriving Show
-Education json
-  institution Text
-  area        Text
-  studyType   Text
-  startDate   Day
-  endDate     Day Maybe
-  gpa         Text
-  courses     [Text]
-  deriving Show
-Award json
-  title    Text
-  date     UTCTime
-  awarder  Text
-  summary  Text
-  deriving Show
-Publication json
-  name        Text
-  publisher   Text
-  releaseDate Day
-  website     Text
-  summary     Text
-  deriving Show
-Skill json
-  name     Text
-  level    Text
-  keywords [Text] Maybe
-  deriving Show
-Language json
-  name  Text
-  level Text
-  deriving Show
-Interest json
-  name Text
-  keywords [Text]
-  deriving Show
-Reference json
-  name Text
-  reference Text
-  deriving Show
-|]
+createCV :: JsonResume -> IO (Key CV)
+createCV j =
+    runSqlite db $ do
+      let rs = references j
+      cvKey <- insert (cv j) :: SqlPersistM (Key CV)
+      mapM_ (createReference cvKey) rs
+      return cvKey
 
-type DbKey = BackendKey SqlBackend
+createReference :: Key CV -> Reference -> SqlPersistM (Key Reference)
+createReference cvKey r =
+    insert $ Reference (Just cvKey) (referenceName r) (referenceReference r)
 
-createCV :: CV -> IO (Key CV)
-createCV r =
-    runSqlite db (insert r :: SqlPersistM (Key CV))
-
-retrieveCV :: DbKey -> IO (Maybe CV)
+retrieveCV :: DbKey -> IO (Maybe JsonResume)
 retrieveCV k =
-    runSqlite db (get (CVKey k) :: SqlPersistM (Maybe CV))
+    runSqlite db $ do
+      let cvKey = CVKey k
+      cv <- get cvKey :: SqlPersistM (Maybe CV)
+      case cv of
+        Nothing -> return Nothing
+        Just cv -> do
+          rs <- selectList [ReferenceCvId ==. Just cvKey] []
+          let references = map entityVal rs
+          return . Just $ JsonResume cv references
 
 updateCV :: (DbKey, CV) -> IO ()
 updateCV (k, r)  =

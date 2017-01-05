@@ -33,6 +33,7 @@ import Servant.Server.Experimental.Auth()
 import qualified Network.HTTP.Client as C
 
 import Db
+import DbTypes
 import PrivateAuth
 
 newtype User = User { userName :: Text }
@@ -40,12 +41,12 @@ newtype User = User { userName :: Text }
 
 type PublicAPI =
          Get '[JSON] [CV]
-    :<|> Capture "id" DbKey :> Get '[JSON] (Maybe CV)
+    :<|> Capture "id" DbKey :> Get '[JSON] (Maybe JsonResume)
 
 type PrivateAPI =
           Capture "id" DbKey :> DeleteNoContent '[JSON] ()
     :<|>  ReqBody '[JSON] (DbKey, CV) :> PostNoContent '[JSON] ()
-    :<|>  ReqBody '[JSON] CV :> Put '[JSON] (Key CV)
+    :<|>  ReqBody '[JSON] JsonResume :> Put '[JSON] (Key CV)
 
 type CVAPI =
           "cv" :> PublicAPI
