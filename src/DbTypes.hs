@@ -15,10 +15,9 @@ module DbTypes where
 
 import Data.Aeson
 import Data.Text (Text)
-import Data.Time
+import Data.Time (Day, UTCTime)
 import Database.Persist
 import Database.Persist.Sql
-import Database.Persist.Sqlite (runSqlite, runMigration)
 import Database.Persist.TH (mkPersist, mkMigrate, persistLowerCase, share, sqlSettings)
 import GHC.Generics
 import Control.Monad (mzero)
@@ -28,7 +27,6 @@ db = "cv.sqlite"
 
 share [mkPersist sqlSettings, mkMigrate "migrateTables"] [persistLowerCase|
 CV json
-  -- basics      Basic
   work        [Work] Maybe
   volunteer   [Volunteer] Maybe
   education   [Education] Maybe
@@ -136,8 +134,6 @@ instance FromJSON Basic where
                             v .: "summary"
     parseJSON _          = mzero
 
-                            --v .:? "profiles" <*>
-                            --v .: "location" <*>
 instance ToJSON Basic where
     toJSON (Basic _ name label picture email phone website summary) =
       object [ "name"     .= name
@@ -204,7 +200,6 @@ instance FromJSON Reference where
 instance ToJSON Reference where
     toJSON (Reference _ name reference) = 
       object ["name" .= name, "reference" .= reference]
-
 
 data Basics = Basics { basic :: Basic
                      , location :: BasicLocation

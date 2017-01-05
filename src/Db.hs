@@ -3,7 +3,6 @@ module Db where
 
 import Data.Maybe (fromJust)
 import Data.Text (Text)
-import Data.Time
 import Database.Persist
 import Database.Persist.Sql
 import Database.Persist.Sqlite (runSqlite, runMigration)
@@ -80,7 +79,8 @@ retrieveCV k =
           let references = map entityVal rs
               interests  = map entityVal is
               basics     = fromJust b' -- TODO: elegant handling?
-          return . Just
+          return
+            . Just
             $ JsonResume cv basics interests references
 
 retrieveBasics :: Maybe (Entity Basic) -> SqlPersistM (Maybe Basics)
