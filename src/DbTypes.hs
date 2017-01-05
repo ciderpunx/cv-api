@@ -28,7 +28,7 @@ db = "cv.sqlite"
 
 share [mkPersist sqlSettings, mkMigrate "migrateTables"] [persistLowerCase|
 CV json
-  basics      Basic
+  -- basics      Basic
   work        [Work] Maybe
   volunteer   [Volunteer] Maybe
   education   [Education] Maybe
@@ -36,10 +36,9 @@ CV json
   publication [Publication] Maybe
   skills      [Skill]
   languages   [Language] Maybe
-  -- interests   [Interest] Maybe
-  -- references  [Reference] Maybe
   deriving Show
-Basic json
+Basic
+  cvId     CVId Maybe
   name     Text
   label    Text
   picture  Text
@@ -47,17 +46,17 @@ Basic json
   phone    Text
   website  Text
   summary  Text
-  profiles  [BasicProfile] Maybe
-  location  BasicLocatioN
   deriving Show
-BasicLocatioN json
+BasicLocation
+  basicId     BasicId Maybe
   address     Text
   postalCode  Text
   city        Text
   countryCode Text
   region      Text
   deriving Show
-BasicProfile json
+BasicProfile
+  basicId  BasicId Maybe
   network  Text
   username Text
   url      Text
@@ -125,6 +124,65 @@ Reference
 
 type DbKey = BackendKey SqlBackend
 
+instance FromJSON Basic where
+    parseJSON (Object v) = Basic <$>
+                            v .:? "cvid" <*>
+                            v .: "name" <*>
+                            v .: "label" <*>
+                            v .: "picture" <*>
+                            v .: "email" <*>
+                            v .: "phone" <*>
+                            v .: "website" <*>
+                            v .: "summary"
+    parseJSON _          = mzero
+
+                            --v .:? "profiles" <*>
+                            --v .: "location" <*>
+instance ToJSON Basic where
+    toJSON (Basic _ name label picture email phone website summary) =
+      object [ "name"     .= name
+             , "label"    .= label
+             , "picture"  .= picture
+             , "email"    .= email
+             , "phone"    .= phone
+             , "website"  .= website
+             , "summary"  .= summary
+             ]
+
+instance FromJSON BasicLocation where
+    parseJSON (Object v) = BasicLocation <$>
+                            v .:? "basicid" <*>
+                            v .: "address" <*>
+                            v .: "postalCode" <*>
+                            v .: "city" <*>
+                            v .: "countryCode" <*>
+                            v .: "region"
+    parseJSON _          = mzero
+
+instance ToJSON BasicLocation where
+    toJSON (BasicLocation _ address postalCode city countryCode region) =
+      object [ "address"      .= address
+             , "postalCode"   .= postalCode
+             , "city"         .= city
+             , "countryCode"  .= countryCode
+             , "region"       .= region
+             ]
+
+instance FromJSON BasicProfile where
+    parseJSON (Object v) = BasicProfile <$>
+                            v .:? "basicid" <*>
+                            v .: "network" <*>
+                            v .: "username" <*>
+                            v .: "url"
+    parseJSON _          = mzero
+
+instance ToJSON BasicProfile where
+    toJSON (BasicProfile _ network username url) =
+      object [ "network"  .= network
+             , "username" .= username
+             , "url"      .= url
+             ]
+
 instance FromJSON Interest where
     parseJSON (Object v) = Interest <$>
                             v .:? "cvid" <*>
@@ -147,7 +205,41 @@ instance ToJSON Reference where
     toJSON (Reference _ name reference) = 
       object ["name" .= name, "reference" .= reference]
 
+
+data Basics = Basics { basic :: Basic
+                     , location :: BasicLocation
+                     , profiles :: [BasicProfile]
+                     } deriving (Show, Generic)
+
+instance FromJSON Basics where
+    parseJSON = withObject "basics" $ \o -> do
+      cvid     <- o .:? "cvid"
+      name     <- o .:  "name"
+      label    <- o .:  "label"
+      picture  <- o .:  "picture"
+      email    <- o .:  "email"
+      phone    <- o .:  "phone"
+      website  <- o .:  "website"
+      summary  <- o .:  "summary"
+      location <- o .:  "location"
+      profiles <- o .:  "profiles"
+      return $ Basics (Basic cvid name label picture email phone website summary) location profiles
+
+instance ToJSON Basics where
+    toJSON (Basics (Basic _ name label picture email phone website summary) location profiles) =
+      object [ "name"     .= name
+             , "label"    .= label
+             , "picture"  .= picture
+             , "email"    .= email
+             , "phone"    .= phone
+             , "website"  .= website
+             , "summary"  .= summary
+             , "location" .= location
+             , "profiles" .= profiles
+             ]
+
 data JsonResume = JsonResume { cv :: CV
+                             , basics :: Basics
                              , interests :: [Interest]
                              , references :: [Reference]
                              } deriving (Show, Generic)

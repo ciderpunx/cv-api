@@ -1,5 +1,7 @@
+{-# LANGUAGE GADTs                      #-}
 module Db where
 
+import Data.Maybe (fromJust)
 import Data.Text (Text)
 import Data.Time
 import Database.Persist
@@ -12,20 +14,56 @@ createCV :: JsonResume -> IO (Key CV)
 createCV j =
     runSqlite db $ do
       let
+          b = basic (basics j)
+          bps = profiles (basics j)
+          bl  = location (basics j)
           is = interests j
           rs = references j
       cvKey <- insert (cv j) :: SqlPersistM (Key CV)
-      mapM_ (createReference cvKey) rs
+      basicKey <- createBasic cvKey b
+      createBasicLocation basicKey bl
+      mapM_ (createBasicProfile basicKey) bps
       mapM_ (createInterest cvKey) is
+      mapM_ (createReference cvKey) rs
       return cvKey
 
-createReference :: Key CV -> Reference -> SqlPersistM (Key Reference)
-createReference cvKey r =
-    insert $ Reference (Just cvKey) (referenceName r) (referenceReference r)
+createBasic :: Key CV -> Basic -> SqlPersistM (Key Basic)
+createBasic cvKey b =
+      insert $ Basic
+          (Just cvKey)
+          (basicName b)
+          (basicLabel b)
+          (basicPicture b)
+          (basicEmail b)
+          (basicPhone b)
+          (basicWebsite b)
+          (basicSummary b)
+
+createBasicProfile :: Key Basic -> BasicProfile -> SqlPersistM (Key BasicProfile)
+createBasicProfile basicKey bp =
+    insert $ BasicProfile
+        (Just basicKey)
+        (basicProfileNetwork bp)
+        (basicProfileUsername bp)
+        (basicProfileUrl bp)
+
+createBasicLocation :: Key Basic -> BasicLocation -> SqlPersistM (Key BasicLocation)
+createBasicLocation basicKey bl =
+    insert $ BasicLocation
+      (Just basicKey)
+      (basicLocationAddress bl)
+      (basicLocationPostalCode bl)
+      (basicLocationCity bl)
+      (basicLocationCountryCode bl)
+      (basicLocationRegion bl)
 
 createInterest :: Key CV -> Interest -> SqlPersistM (Key Interest)
 createInterest cvKey i =
     insert $ Interest (Just cvKey) (interestName i) (interestKeywords i)
+
+createReference :: Key CV -> Reference -> SqlPersistM (Key Reference)
+createReference cvKey r =
+    insert $ Reference (Just cvKey) (referenceName r) (referenceReference r)
 
 retrieveCV :: DbKey -> IO (Maybe JsonResume)
 retrieveCV k =
@@ -35,12 +73,29 @@ retrieveCV k =
       case cv of
         Nothing -> return Nothing
         Just cv -> do
+          b <- selectFirst [BasicCvId ==. Just cvKey] []
+          b' <- retrieveBasics b
           is <- selectList [InterestCvId ==. Just cvKey] []
           rs <- selectList [ReferenceCvId ==. Just cvKey] []
           let references = map entityVal rs
               interests  = map entityVal is
+              basics     = fromJust b' -- TODO: elegant handling?
           return . Just
-            $ JsonResume cv interests references 
+            $ JsonResume cv basics interests references
+
+retrieveBasics :: Maybe (Entity Basic) -> SqlPersistM (Maybe Basics)
+retrieveBasics b =
+      case b of
+        Just basic -> do
+            let bid = entityKey basic
+            bl <- selectFirst [BasicLocationBasicId ==. Just bid] []
+            bps <- selectList [BasicProfileBasicId ==. Just bid] []
+            return
+              . Just
+              $ Basics (entityVal basic)
+                       (entityVal $ fromJust bl) -- TODO: elegant handling?
+                       (map entityVal bps)
+        Nothing -> return Nothing
 
 -- TODO: Only updates CVs, not their fields
 updateCV :: (DbKey, CV) -> IO ()
