@@ -6,7 +6,6 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
 {-# LANGUAGE OverloadedStrings          #-}
-{-# LANGUAGE DuplicateRecordFields     #-}
 {-# LANGUAGE QuasiQuotes                #-}
 {-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TypeFamilies               #-}
@@ -37,7 +36,7 @@ CV json
   publication [Publication] Maybe
   skills      [Skill]
   languages   [Language] Maybe
-  interests   [Interest] Maybe
+  -- interests   [Interest] Maybe
   -- references  [Reference] Maybe
   deriving Show
 Basic json
@@ -112,7 +111,8 @@ Language json
   name  Text
   level Text
   deriving Show
-Interest json
+Interest
+  cvId CVId Maybe
   name Text
   keywords [Text]
   deriving Show
@@ -124,6 +124,17 @@ Reference
 |]
 
 type DbKey = BackendKey SqlBackend
+
+instance FromJSON Interest where
+    parseJSON (Object v) = Interest <$>
+                            v .:? "cvid" <*>
+                            v .: "name" <*>
+                            v .: "keywords"
+    parseJSON _          = mzero
+
+instance ToJSON Interest where
+    toJSON (Interest _ name keywords) =
+      object ["name" .= name, "keywords" .= keywords]
 
 instance FromJSON Reference where
     parseJSON (Object v) = Reference <$>
@@ -137,6 +148,7 @@ instance ToJSON Reference where
       object ["name" .= name, "reference" .= reference]
 
 data JsonResume = JsonResume { cv :: CV
+                             , interests :: [Interest]
                              , references :: [Reference]
                              } deriving (Show, Generic)
 

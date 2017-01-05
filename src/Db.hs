@@ -1,42 +1,39 @@
-{-# LANGUAGE DataKinds                  #-}
-{-# LANGUAGE DeriveGeneric              #-}
-{-# LANGUAGE FlexibleContexts           #-}
-{-# LANGUAGE FlexibleInstances          #-}
-{-# LANGUAGE GADTs                      #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE MultiParamTypeClasses      #-}
-{-# LANGUAGE OverloadedStrings          #-}
-{-# LANGUAGE DuplicateRecordFields     #-}
-{-# LANGUAGE QuasiQuotes                #-}
-{-# LANGUAGE TemplateHaskell            #-}
-{-# LANGUAGE TypeFamilies               #-}
-{-# LANGUAGE TypeOperators              #-}
-
+-- {-# LANGUAGE DataKinds                  #-}
+-- {-# LANGUAGE FlexibleContexts           #-}
+-- {-# LANGUAGE FlexibleInstances          #-}
+-- {-# LANGUAGE GADTs                      #-}
+-- {-# LANGUAGE MultiParamTypeClasses      #-}
+-- {-# LANGUAGE OverloadedStrings          #-}
+-- {-# LANGUAGE TypeFamilies               #-}
+-- {-# LANGUAGE TypeOperators              #-}
 module Db where
 
-import Data.Aeson
 import Data.Text (Text)
 import Data.Time
 import Database.Persist
 import Database.Persist.Sql
 import Database.Persist.Sqlite (runSqlite, runMigration)
-import Database.Persist.TH (mkPersist, mkMigrate, persistLowerCase, share, sqlSettings)
-import GHC.Generics
-import Control.Monad (mzero)
 
 import DbTypes
 
 createCV :: JsonResume -> IO (Key CV)
 createCV j =
     runSqlite db $ do
-      let rs = references j
+      let
+          is = interests j
+          rs = references j
       cvKey <- insert (cv j) :: SqlPersistM (Key CV)
       mapM_ (createReference cvKey) rs
+      mapM_ (createInterest cvKey) is
       return cvKey
 
 createReference :: Key CV -> Reference -> SqlPersistM (Key Reference)
 createReference cvKey r =
     insert $ Reference (Just cvKey) (referenceName r) (referenceReference r)
+
+createInterest :: Key CV -> Interest -> SqlPersistM (Key Interest)
+createInterest cvKey i =
+    insert $ Interest (Just cvKey) (interestName i) (interestKeywords i)
 
 retrieveCV :: DbKey -> IO (Maybe JsonResume)
 retrieveCV k =
@@ -46,9 +43,12 @@ retrieveCV k =
       case cv of
         Nothing -> return Nothing
         Just cv -> do
+          is <- selectList [InterestCvId ==. Just cvKey] []
           rs <- selectList [ReferenceCvId ==. Just cvKey] []
           let references = map entityVal rs
-          return . Just $ JsonResume cv references
+              interests  = map entityVal is
+          return . Just
+            $ JsonResume cv interests references 
 
 updateCV :: (DbKey, CV) -> IO ()
 updateCV (k, r)  =
