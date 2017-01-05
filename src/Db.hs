@@ -1,11 +1,3 @@
--- {-# LANGUAGE DataKinds                  #-}
--- {-# LANGUAGE FlexibleContexts           #-}
--- {-# LANGUAGE FlexibleInstances          #-}
--- {-# LANGUAGE GADTs                      #-}
--- {-# LANGUAGE MultiParamTypeClasses      #-}
--- {-# LANGUAGE OverloadedStrings          #-}
--- {-# LANGUAGE TypeFamilies               #-}
--- {-# LANGUAGE TypeOperators              #-}
 module Db where
 
 import Data.Text (Text)
@@ -50,14 +42,18 @@ retrieveCV k =
           return . Just
             $ JsonResume cv interests references 
 
+-- TODO: Only updates CVs, not their fields
 updateCV :: (DbKey, CV) -> IO ()
 updateCV (k, r)  =
     runSqlite db (replace (CVKey k) r :: SqlPersistM ())
 
+-- TODO: Only deletes CVS, not fields from them
 deleteCV :: DbKey -> IO ()
 deleteCV k =
     runSqlite db (delete (CVKey k) :: SqlPersistM ())
 
+-- TODO: This should probably give us a list of the ids of all our CVs, or perhaps the
+-- id and name?
 listCVs :: IO [CV]
 listCVs = do
     es <- runSqlite db (selectList [] [] :: SqlPersistM [Entity CV])
