@@ -13,8 +13,7 @@ import DbTypes
 createCV :: JsonResume -> IO (Key CV)
 createCV j =
     runSqlite db $ do
-      let
-          b = basic (basics j)
+      let b = basic (basics j)
           bps = profiles (basics j)
           bl  = location (basics j)
       cvKey <- insert (cv j) :: SqlPersistM (Key CV)
