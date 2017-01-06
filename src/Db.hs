@@ -1,4 +1,5 @@
 {-# LANGUAGE GADTs                      #-}
+
 module Db where
 
 import Data.Maybe (fromJust)
@@ -16,12 +17,14 @@ createCV j =
           b = basic (basics j)
           bps = profiles (basics j)
           bl  = location (basics j)
-          is = interests j
-          rs = references j
+          ls  = languages j
+          is  = interests j
+          rs  = references j
       cvKey <- insert (cv j) :: SqlPersistM (Key CV)
       basicKey <- createBasic cvKey b
       createBasicLocation basicKey bl
       mapM_ (createBasicProfile basicKey) bps
+      mapM_ (createLanguage cvKey) ls
       mapM_ (createInterest cvKey) is
       mapM_ (createReference cvKey) rs
       return cvKey
@@ -56,6 +59,10 @@ createBasicLocation basicKey bl =
       (basicLocationCountryCode bl)
       (basicLocationRegion bl)
 
+createLanguage :: Key CV -> Language -> SqlPersistM (Key Language)
+createLanguage cvKey l =
+    insert $ Language (Just cvKey) (languageName l) (languageLevel l)
+
 createInterest :: Key CV -> Interest -> SqlPersistM (Key Interest)
 createInterest cvKey i =
     insert $ Interest (Just cvKey) (interestName i) (interestKeywords i)
@@ -74,14 +81,20 @@ retrieveCV k =
         Just cv -> do
           b <- selectFirst [BasicCvId ==. Just cvKey] []
           b' <- retrieveBasics b
+          ls <- selectList [LanguageCvId ==. Just cvKey] []
           is <- selectList [InterestCvId ==. Just cvKey] []
           rs <- selectList [ReferenceCvId ==. Just cvKey] []
-          let references = map entityVal rs
+          let languages  = map entityVal ls
+              references = map entityVal rs
               interests  = map entityVal is
               basics     = fromJust b' -- TODO: elegant handling?
           return
             . Just
-            $ JsonResume cv basics interests references
+            $ JsonResume cv
+                         basics
+                         languages
+                         interests
+                         references
 
 retrieveBasics :: Maybe (Entity Basic) -> SqlPersistM (Maybe Basics)
 retrieveBasics b =

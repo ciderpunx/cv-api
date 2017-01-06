@@ -33,7 +33,7 @@ CV json
   award       [Award] Maybe
   publication [Publication] Maybe
   skills      [Skill]
-  languages   [Language] Maybe
+  -- languages   [Language] Maybe
   deriving Show
 Basic
   cvId     CVId Maybe
@@ -104,7 +104,8 @@ Skill json
   level    Text
   keywords [Text] Maybe
   deriving Show
-Language json
+Language
+  cvId CVId Maybe
   name  Text
   level Text
   deriving Show
@@ -179,6 +180,17 @@ instance ToJSON BasicProfile where
              , "url"      .= url
              ]
 
+instance FromJSON Language where
+    parseJSON (Object v) = Language <$>
+                            v .:? "cvid" <*>
+                            v .: "name" <*>
+                            v .: "level"
+    parseJSON _          = mzero
+
+instance ToJSON Language where
+    toJSON (Language _ name level) =
+      object ["name" .= name, "level" .= level]
+
 instance FromJSON Interest where
     parseJSON (Object v) = Interest <$>
                             v .:? "cvid" <*>
@@ -235,6 +247,7 @@ instance ToJSON Basics where
 
 data JsonResume = JsonResume { cv :: CV
                              , basics :: Basics
+                             , languages :: [Language]
                              , interests :: [Interest]
                              , references :: [Reference]
                              } deriving (Show, Generic)
