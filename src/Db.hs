@@ -17,6 +17,7 @@ createCV j =
           b = basic (basics j)
           bps = profiles (basics j)
           bl  = location (basics j)
+          as  = awards j
           ps  = publications j
           ss  = skills j
           ls  = languages j
@@ -26,6 +27,7 @@ createCV j =
       basicKey <- createBasic cvKey b
       createBasicLocation basicKey bl
       mapM_ (createBasicProfile basicKey) bps
+      mapM_ (createAward cvKey) as
       mapM_ (createPublication cvKey) ps
       mapM_ (createSkill cvKey) ss
       mapM_ (createLanguage cvKey) ls
@@ -63,6 +65,15 @@ createBasicLocation basicKey bl =
       (basicLocationCountryCode bl)
       (basicLocationRegion bl)
 
+createAward :: Key CV -> Award -> SqlPersistM (Key Award)
+createAward cvKey a =
+    insert $ Award
+              (Just cvKey)
+              (awardTitle a)
+              (awardDate a)
+              (awardAwarder a)
+              (awardSummary a)
+
 createPublication :: Key CV -> Publication -> SqlPersistM (Key Publication)
 createPublication cvKey p =
     insert $ Publication
@@ -99,12 +110,14 @@ retrieveCV k =
         Just cv -> do
           b <- selectFirst [BasicCvId ==. Just cvKey] []
           b' <- retrieveBasics b
+          as <- selectList [AwardCvId ==. Just cvKey] []
           ps <- selectList [PublicationCvId ==. Just cvKey] []
           ss <- selectList [SkillCvId ==. Just cvKey] []
           ls <- selectList [LanguageCvId ==. Just cvKey] []
           is <- selectList [InterestCvId ==. Just cvKey] []
           rs <- selectList [ReferenceCvId ==. Just cvKey] []
           let basics     = fromJust b' -- TODO: elegant handling?
+              awards       = map entityVal as
               publications = map entityVal ps
               skills       = map entityVal ss
               languages    = map entityVal ls
@@ -114,6 +127,7 @@ retrieveCV k =
             . Just
             $ JsonResume cv
                          basics
+                         awards
                          publications
                          skills
                          languages

@@ -38,10 +38,7 @@ CV json
   work        [Work] Maybe
   volunteer   [Volunteer] Maybe
   education   [Education] Maybe
-  award       [Award] Maybe
-  -- publication [Publication] Maybe
-  -- skills      [Skill]
-  -- languages   [Language] Maybe
+  -- award       [Award] Maybe
   deriving Show
 Basic
   cvId     CVId Maybe
@@ -94,9 +91,10 @@ Education json
   gpa         Text
   courses     [Text]
   deriving Show
-Award json
+Award
+  cvId     CVId Maybe
   title    Text
-  date     UTCTime
+  date     Day
   awarder  Text
   summary  Text
   deriving Show
@@ -188,6 +186,23 @@ instance ToJSON BasicProfile where
       object [ "network"  .= network
              , "username" .= username
              , "url"      .= url
+             ]
+
+instance FromJSON Award where
+    parseJSON (Object v) = Award <$>
+                            v .:? "cvid"   <*>
+                            v .: "title"   <*>
+                            v .: "date"    <*>
+                            v .: "awarder" <*>
+                            v .: "summary"
+    parseJSON _          = mzero
+
+instance ToJSON Award where
+    toJSON (Award _ title date awarder summary) =
+      object [ "title"   .= title
+             , "date"    .= date
+             , "awarder" .= awarder
+             , "summary" .= summary
              ]
 
 instance FromJSON Publication where
@@ -294,8 +309,8 @@ data JsonResume = JsonResume { cv :: CV
 --                             , work         :: [Work]
 --                             , volunteer    :: [Volunteer]
 --                             , education    :: [Education]
---                             , award        :: [Award]
-                             , publications  :: [Publication]
+                             , awards       :: [Award]
+                             , publications :: [Publication]
                              , skills       :: [Skill]
                              , languages    :: [Language]
                              , interests    :: [Interest]
