@@ -126,12 +126,12 @@ type DbKey = BackendKey SqlBackend
 
 instance FromJSON Basic where
     parseJSON (Object v) = Basic <$>
-                            v .:? "cvid" <*>
-                            v .: "name" <*>
-                            v .: "label" <*>
+                            v .:? "cvid"   <*>
+                            v .: "name"    <*>
+                            v .: "label"   <*>
                             v .: "picture" <*>
-                            v .: "email" <*>
-                            v .: "phone" <*>
+                            v .: "email"   <*>
+                            v .: "phone"   <*>
                             v .: "website" <*>
                             v .: "summary"
     parseJSON _          = mzero
@@ -149,10 +149,10 @@ instance ToJSON Basic where
 
 instance FromJSON BasicLocation where
     parseJSON (Object v) = BasicLocation <$>
-                            v .:? "basicid" <*>
-                            v .: "address" <*>
-                            v .: "postalCode" <*>
-                            v .: "city" <*>
+                            v .:? "basicid"    <*>
+                            v .: "address"     <*>
+                            v .: "postalCode"  <*>
+                            v .: "city"        <*>
                             v .: "countryCode" <*>
                             v .: "region"
     parseJSON _          = mzero
@@ -169,7 +169,7 @@ instance ToJSON BasicLocation where
 instance FromJSON BasicProfile where
     parseJSON (Object v) = BasicProfile <$>
                             v .:? "basicid" <*>
-                            v .: "network" <*>
+                            v .: "network"  <*>
                             v .: "username" <*>
                             v .: "url"
     parseJSON _          = mzero
@@ -184,7 +184,7 @@ instance ToJSON BasicProfile where
 instance FromJSON Skill where
     parseJSON (Object v) = Skill <$>
                             v .:? "cvid" <*>
-                            v .: "name" <*>
+                            v .: "name"  <*>
                             v .: "level" <*>
                             v .: "keywords"
     parseJSON _          = mzero
@@ -199,35 +199,35 @@ instance ToJSON Skill where
 instance FromJSON Language where
     parseJSON (Object v) = Language <$>
                             v .:? "cvid" <*>
-                            v .: "name" <*>
+                            v .: "name"  <*>
                             v .: "level"
     parseJSON _          = mzero
 
 instance ToJSON Language where
     toJSON (Language _ name level) =
-      object ["name" .= name, "level" .= level]
+      object [ "name" .= name, "level" .= level ]
 
 instance FromJSON Interest where
     parseJSON (Object v) = Interest <$>
                             v .:? "cvid" <*>
-                            v .: "name" <*>
+                            v .: "name"  <*>
                             v .: "keywords"
     parseJSON _          = mzero
 
 instance ToJSON Interest where
     toJSON (Interest _ name keywords) =
-      object ["name" .= name, "keywords" .= keywords]
+      object [ "name" .= name, "keywords" .= keywords ]
 
 instance FromJSON Reference where
     parseJSON (Object v) = Reference <$>
                             v .:? "cvid" <*>
-                            v .: "name" <*>
+                            v .: "name"  <*>
                             v .: "reference"
     parseJSON _          = mzero
 
 instance ToJSON Reference where
-    toJSON (Reference _ name reference) = 
-      object ["name" .= name, "reference" .= reference]
+    toJSON (Reference _ name reference) =
+      object [ "name" .= name, "reference" .= reference ]
 
 data Basics = Basics { basic :: Basic
                      , location :: BasicLocation
