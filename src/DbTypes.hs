@@ -37,8 +37,7 @@ share [mkPersist sqlSettings, mkMigrate "migrateTables"] [persistLowerCase|
 CV json
   work        [Work] Maybe
   volunteer   [Volunteer] Maybe
-  education   [Education] Maybe
-  -- award       [Award] Maybe
+  -- education   [Education] Maybe
   deriving Show
 Basic
   cvId     CVId Maybe
@@ -82,7 +81,8 @@ Volunteer json
   summary      Text
   highlights   [Text]
   deriving Show
-Education json
+Education
+  cvId        CVId Maybe
   institution Text
   area        Text
   studyType   Text
@@ -186,6 +186,29 @@ instance ToJSON BasicProfile where
       object [ "network"  .= network
              , "username" .= username
              , "url"      .= url
+             ]
+
+instance FromJSON Education where
+    parseJSON (Object v) = Education <$>
+                            v .:? "cvid"       <*>
+                            v .: "institution" <*>
+                            v .: "area"        <*>
+                            v .: "studyType"   <*>
+                            v .: "startDate"   <*>
+                            v .:? "endDate"    <*>
+                            v .: "gpa"         <*>
+                            v .: "courses"
+    parseJSON _          = mzero
+
+instance ToJSON Education where
+    toJSON (Education _ institution area studyType startDate endDate gpa courses) =
+      object [ "institution" .= institution
+             , "area"        .= area
+             , "studyType"   .= studyType
+             , "startDate"   .= startDate
+             , "endDate"     .= endDate
+             , "gpa"         .= gpa
+             , "courses"     .= courses
              ]
 
 instance FromJSON Award where
@@ -308,7 +331,7 @@ data JsonResume = JsonResume { cv :: CV
                              , basics       :: Basics
 --                             , work         :: [Work]
 --                             , volunteer    :: [Volunteer]
---                             , education    :: [Education]
+                             , education    :: [Education]
                              , awards       :: [Award]
                              , publications :: [Publication]
                              , skills       :: [Skill]

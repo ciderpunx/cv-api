@@ -17,6 +17,7 @@ createCV j =
           b = basic (basics j)
           bps = profiles (basics j)
           bl  = location (basics j)
+          es  = education j
           as  = awards j
           ps  = publications j
           ss  = skills j
@@ -27,6 +28,7 @@ createCV j =
       basicKey <- createBasic cvKey b
       createBasicLocation basicKey bl
       mapM_ (createBasicProfile basicKey) bps
+      mapM_ (createEducation cvKey) es
       mapM_ (createAward cvKey) as
       mapM_ (createPublication cvKey) ps
       mapM_ (createSkill cvKey) ss
@@ -64,6 +66,18 @@ createBasicLocation basicKey bl =
       (basicLocationCity bl)
       (basicLocationCountryCode bl)
       (basicLocationRegion bl)
+
+createEducation :: Key CV -> Education -> SqlPersistM (Key Education)
+createEducation cvKey e =
+    insert $ Education
+              (Just cvKey)
+              (educationInstitution e)
+              (educationArea e)
+              (educationStudyType e)
+              (educationStartDate e)
+              (educationEndDate e)
+              (educationGpa e)
+              (educationCourses e)
 
 createAward :: Key CV -> Award -> SqlPersistM (Key Award)
 createAward cvKey a =
@@ -110,6 +124,7 @@ retrieveCV k =
         Just cv -> do
           b <- selectFirst [BasicCvId ==. Just cvKey] []
           b' <- retrieveBasics b
+          es <- selectList [EducationCvId ==. Just cvKey] []
           as <- selectList [AwardCvId ==. Just cvKey] []
           ps <- selectList [PublicationCvId ==. Just cvKey] []
           ss <- selectList [SkillCvId ==. Just cvKey] []
@@ -117,6 +132,7 @@ retrieveCV k =
           is <- selectList [InterestCvId ==. Just cvKey] []
           rs <- selectList [ReferenceCvId ==. Just cvKey] []
           let basics     = fromJust b' -- TODO: elegant handling?
+              education    = map entityVal es
               awards       = map entityVal as
               publications = map entityVal ps
               skills       = map entityVal ss
@@ -127,6 +143,7 @@ retrieveCV k =
             . Just
             $ JsonResume cv
                          basics
+                         education
                          awards
                          publications
                          skills
