@@ -25,7 +25,6 @@ import Control.Monad (mzero)
 db :: Text
 db = "cv.sqlite"
 
-
 -- TODO support meta like this:
 -- "{
 --  "meta": {
