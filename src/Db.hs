@@ -17,6 +17,7 @@ createCV j =
           b = basic (basics j)
           bps = profiles (basics j)
           bl  = location (basics j)
+          vs  = volunteer j
           es  = education j
           as  = awards j
           ps  = publications j
@@ -28,6 +29,7 @@ createCV j =
       basicKey <- createBasic cvKey b
       createBasicLocation basicKey bl
       mapM_ (createBasicProfile basicKey) bps
+      mapM_ (createVolunteer cvKey) vs
       mapM_ (createEducation cvKey) es
       mapM_ (createAward cvKey) as
       mapM_ (createPublication cvKey) ps
@@ -66,6 +68,18 @@ createBasicLocation basicKey bl =
       (basicLocationCity bl)
       (basicLocationCountryCode bl)
       (basicLocationRegion bl)
+
+createVolunteer :: Key CV -> Volunteer -> SqlPersistM (Key Volunteer)
+createVolunteer cvKey e =
+    insert $ Volunteer
+              (Just cvKey)
+              (volunteerOrganization e)
+              (volunteerPosition e)
+              (volunteerWebsite e)
+              (volunteerStartDate e)
+              (volunteerEndDate e)
+              (volunteerSummary e)
+              (volunteerHighlights e)
 
 createEducation :: Key CV -> Education -> SqlPersistM (Key Education)
 createEducation cvKey e =
@@ -124,6 +138,7 @@ retrieveCV k =
         Just cv -> do
           b <- selectFirst [BasicCvId ==. Just cvKey] []
           b' <- retrieveBasics b
+          vs <- selectList [VolunteerCvId ==. Just cvKey] []
           es <- selectList [EducationCvId ==. Just cvKey] []
           as <- selectList [AwardCvId ==. Just cvKey] []
           ps <- selectList [PublicationCvId ==. Just cvKey] []
@@ -132,6 +147,7 @@ retrieveCV k =
           is <- selectList [InterestCvId ==. Just cvKey] []
           rs <- selectList [ReferenceCvId ==. Just cvKey] []
           let basics     = fromJust b' -- TODO: elegant handling?
+              volunteer    = map entityVal vs
               education    = map entityVal es
               awards       = map entityVal as
               publications = map entityVal ps
@@ -143,6 +159,7 @@ retrieveCV k =
             . Just
             $ JsonResume cv
                          basics
+                         volunteer
                          education
                          awards
                          publications

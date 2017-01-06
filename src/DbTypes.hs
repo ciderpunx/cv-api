@@ -36,8 +36,6 @@ db = "cv.sqlite"
 share [mkPersist sqlSettings, mkMigrate "migrateTables"] [persistLowerCase|
 CV json
   work        [Work] Maybe
-  volunteer   [Volunteer] Maybe
-  -- education   [Education] Maybe
   deriving Show
 Basic
   cvId     CVId Maybe
@@ -72,7 +70,8 @@ Work json
   summary   Text
   highlights [Text]
   deriving Show
-Volunteer json
+Volunteer
+  cvId         CVId Maybe
   organization Text
   position     Text
   website      Text
@@ -188,6 +187,31 @@ instance ToJSON BasicProfile where
              , "url"      .= url
              ]
 
+
+instance FromJSON Volunteer where
+    parseJSON (Object v) = Volunteer <$>
+                            v .:? "cvid"        <*>
+                            v .: "organization" <*>
+                            v .: "position"     <*>
+                            v .: "website"      <*>
+                            v .: "startDate"    <*>
+                            v .:? "endDate"     <*>
+                            v .: "summary"      <*>
+                            v .: "highlights"
+    parseJSON _          = mzero
+
+instance ToJSON Volunteer where
+    toJSON (Volunteer _ organization position website startDate endDate summary highlights) =
+      object [ "organization" .= organization
+             , "position"     .= position
+             , "website"      .= website
+             , "startDate"    .= startDate
+             , "endDate"      .= endDate
+             , "summary"      .= summary
+             , "highlights"   .= highlights
+             ]
+
+
 instance FromJSON Education where
     parseJSON (Object v) = Education <$>
                             v .:? "cvid"       <*>
@@ -252,7 +276,7 @@ instance FromJSON Skill where
                             v .:? "cvid" <*>
                             v .: "name"  <*>
                             v .: "level" <*>
-                            v .: "keywords"
+                            v .:? "keywords"
     parseJSON _          = mzero
 
 instance ToJSON Skill where
@@ -330,7 +354,7 @@ instance ToJSON Basics where
 data JsonResume = JsonResume { cv :: CV
                              , basics       :: Basics
 --                             , work         :: [Work]
---                             , volunteer    :: [Volunteer]
+                             , volunteer    :: [Volunteer]
                              , education    :: [Education]
                              , awards       :: [Award]
                              , publications :: [Publication]
