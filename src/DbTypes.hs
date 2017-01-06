@@ -35,7 +35,6 @@ db = "cv.sqlite"
 
 share [mkPersist sqlSettings, mkMigrate "migrateTables"] [persistLowerCase|
 CV json
-  work        [Work] Maybe
   deriving Show
 Basic
   cvId     CVId Maybe
@@ -61,7 +60,8 @@ BasicProfile
   username Text
   url      Text
   deriving Show
-Work json
+Work
+  cvId      CVId Maybe
   company   Text
   position  Text
   website   Text
@@ -187,6 +187,28 @@ instance ToJSON BasicProfile where
              , "url"      .= url
              ]
 
+instance FromJSON Work where
+    parseJSON (Object v) = Work <$>
+                            v .:? "cvid"        <*>
+                            v .: "company" <*>
+                            v .: "position"     <*>
+                            v .: "website"      <*>
+                            v .: "startDate"    <*>
+                            v .:? "endDate"     <*>
+                            v .: "summary"      <*>
+                            v .: "highlights"
+    parseJSON _          = mzero
+
+instance ToJSON Work where
+    toJSON (Work _ company position website startDate endDate summary highlights) =
+      object [ "company" .= company
+             , "position"     .= position
+             , "website"      .= website
+             , "startDate"    .= startDate
+             , "endDate"      .= endDate
+             , "summary"      .= summary
+             , "highlights"   .= highlights
+             ]
 
 instance FromJSON Volunteer where
     parseJSON (Object v) = Volunteer <$>
@@ -210,7 +232,6 @@ instance ToJSON Volunteer where
              , "summary"      .= summary
              , "highlights"   .= highlights
              ]
-
 
 instance FromJSON Education where
     parseJSON (Object v) = Education <$>
@@ -353,7 +374,7 @@ instance ToJSON Basics where
 
 data JsonResume = JsonResume { cv :: CV
                              , basics       :: Basics
---                             , work         :: [Work]
+                             , work         :: [Work]
                              , volunteer    :: [Volunteer]
                              , education    :: [Education]
                              , awards       :: [Award]

@@ -17,6 +17,7 @@ createCV j =
           b = basic (basics j)
           bps = profiles (basics j)
           bl  = location (basics j)
+          ws  = work j
           vs  = volunteer j
           es  = education j
           as  = awards j
@@ -29,6 +30,7 @@ createCV j =
       basicKey <- createBasic cvKey b
       createBasicLocation basicKey bl
       mapM_ (createBasicProfile basicKey) bps
+      mapM_ (createWork cvKey) ws
       mapM_ (createVolunteer cvKey) vs
       mapM_ (createEducation cvKey) es
       mapM_ (createAward cvKey) as
@@ -69,17 +71,29 @@ createBasicLocation basicKey bl =
       (basicLocationCountryCode bl)
       (basicLocationRegion bl)
 
+createWork :: Key CV -> Work -> SqlPersistM (Key Work)
+createWork cvKey w =
+    insert $ Work
+              (Just cvKey)
+              (workCompany w)
+              (workPosition w)
+              (workWebsite w)
+              (workStartDate w)
+              (workEndDate w)
+              (workSummary w)
+              (workHighlights w)
+
 createVolunteer :: Key CV -> Volunteer -> SqlPersistM (Key Volunteer)
-createVolunteer cvKey e =
+createVolunteer cvKey v =
     insert $ Volunteer
               (Just cvKey)
-              (volunteerOrganization e)
-              (volunteerPosition e)
-              (volunteerWebsite e)
-              (volunteerStartDate e)
-              (volunteerEndDate e)
-              (volunteerSummary e)
-              (volunteerHighlights e)
+              (volunteerOrganization v)
+              (volunteerPosition v)
+              (volunteerWebsite v)
+              (volunteerStartDate v)
+              (volunteerEndDate v)
+              (volunteerSummary v)
+              (volunteerHighlights v)
 
 createEducation :: Key CV -> Education -> SqlPersistM (Key Education)
 createEducation cvKey e =
@@ -138,6 +152,7 @@ retrieveCV k =
         Just cv -> do
           b <- selectFirst [BasicCvId ==. Just cvKey] []
           b' <- retrieveBasics b
+          ws <- selectList [WorkCvId ==. Just cvKey] []
           vs <- selectList [VolunteerCvId ==. Just cvKey] []
           es <- selectList [EducationCvId ==. Just cvKey] []
           as <- selectList [AwardCvId ==. Just cvKey] []
@@ -146,7 +161,8 @@ retrieveCV k =
           ls <- selectList [LanguageCvId ==. Just cvKey] []
           is <- selectList [InterestCvId ==. Just cvKey] []
           rs <- selectList [ReferenceCvId ==. Just cvKey] []
-          let basics     = fromJust b' -- TODO: elegant handling?
+          let basics       = fromJust b' -- TODO: elegant handling?
+              work         = map entityVal ws
               volunteer    = map entityVal vs
               education    = map entityVal es
               awards       = map entityVal as
@@ -159,6 +175,7 @@ retrieveCV k =
             . Just
             $ JsonResume cv
                          basics
+                         work
                          volunteer
                          education
                          awards
