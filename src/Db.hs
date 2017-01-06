@@ -17,28 +17,19 @@ createCV j =
           b = basic (basics j)
           bps = profiles (basics j)
           bl  = location (basics j)
-          ws  = work j
-          vs  = volunteer j
-          es  = education j
-          as  = awards j
-          ps  = publications j
-          ss  = skills j
-          ls  = languages j
-          is  = interests j
-          rs  = references j
       cvKey <- insert (cv j) :: SqlPersistM (Key CV)
       basicKey <- createBasic cvKey b
       createBasicLocation basicKey bl
       mapM_ (createBasicProfile basicKey) bps
-      mapM_ (createWork cvKey) ws
-      mapM_ (createVolunteer cvKey) vs
-      mapM_ (createEducation cvKey) es
-      mapM_ (createAward cvKey) as
-      mapM_ (createPublication cvKey) ps
-      mapM_ (createSkill cvKey) ss
-      mapM_ (createLanguage cvKey) ls
-      mapM_ (createInterest cvKey) is
-      mapM_ (createReference cvKey) rs
+      mapM_ (createWork cvKey) (work j)
+      mapM_ (createVolunteer cvKey) (volunteer j)
+      mapM_ (createEducation cvKey) (education j)
+      mapM_ (createAward cvKey) (awards j)
+      mapM_ (createPublication cvKey) (publications j)
+      mapM_ (createSkill cvKey) (skills j)
+      mapM_ (createLanguage cvKey) (languages j)
+      mapM_ (createInterest cvKey) (interests j)
+      mapM_ (createReference cvKey) (references j)
       return cvKey
 
 createBasic :: Key CV -> Basic -> SqlPersistM (Key Basic)
