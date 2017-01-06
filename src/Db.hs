@@ -17,6 +17,7 @@ createCV j =
           b = basic (basics j)
           bps = profiles (basics j)
           bl  = location (basics j)
+          ps  = publications j
           ss  = skills j
           ls  = languages j
           is  = interests j
@@ -25,6 +26,7 @@ createCV j =
       basicKey <- createBasic cvKey b
       createBasicLocation basicKey bl
       mapM_ (createBasicProfile basicKey) bps
+      mapM_ (createPublication cvKey) ps
       mapM_ (createSkill cvKey) ss
       mapM_ (createLanguage cvKey) ls
       mapM_ (createInterest cvKey) is
@@ -61,13 +63,23 @@ createBasicLocation basicKey bl =
       (basicLocationCountryCode bl)
       (basicLocationRegion bl)
 
+createPublication :: Key CV -> Publication -> SqlPersistM (Key Publication)
+createPublication cvKey p =
+    insert $ Publication
+              (Just cvKey)
+              (publicationName p)
+              (publicationPublisher p)
+              (publicationReleaseDate p)
+              (publicationWebsite p)
+              (publicationSummary p)
+
 createSkill :: Key CV -> Skill -> SqlPersistM (Key Skill)
 createSkill cvKey l =
     insert $ Skill (Just cvKey) (skillName l) (skillLevel l) (skillKeywords l)
 
 createLanguage :: Key CV -> Language -> SqlPersistM (Key Language)
 createLanguage cvKey l =
-    insert $ Language (Just cvKey) (languageName l) (languageLevel l)
+    insert $ Language (Just cvKey) (languageLanguage l) (languageFluency l)
 
 createInterest :: Key CV -> Interest -> SqlPersistM (Key Interest)
 createInterest cvKey i =
@@ -87,19 +99,22 @@ retrieveCV k =
         Just cv -> do
           b <- selectFirst [BasicCvId ==. Just cvKey] []
           b' <- retrieveBasics b
+          ps <- selectList [PublicationCvId ==. Just cvKey] []
           ss <- selectList [SkillCvId ==. Just cvKey] []
           ls <- selectList [LanguageCvId ==. Just cvKey] []
           is <- selectList [InterestCvId ==. Just cvKey] []
           rs <- selectList [ReferenceCvId ==. Just cvKey] []
           let basics     = fromJust b' -- TODO: elegant handling?
-              skills     = map entityVal ss
-              languages  = map entityVal ls
-              references = map entityVal rs
-              interests  = map entityVal is
+              publications = map entityVal ps
+              skills       = map entityVal ss
+              languages    = map entityVal ls
+              references   = map entityVal rs
+              interests    = map entityVal is
           return
             . Just
             $ JsonResume cv
                          basics
+                         publications
                          skills
                          languages
                          interests

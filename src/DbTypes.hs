@@ -25,13 +25,22 @@ import Control.Monad (mzero)
 db :: Text
 db = "cv.sqlite"
 
+
+-- TODO support meta like this:
+-- "{
+--  "meta": {
+--    "canonical": "https://raw.githubusercontent.com/jsonresume/resume-schema/master/resume.json",
+--    "version": "v1.0.0",
+--    "lastModified": "2017-12-24T15:53:00"
+--  },
+
 share [mkPersist sqlSettings, mkMigrate "migrateTables"] [persistLowerCase|
 CV json
   work        [Work] Maybe
   volunteer   [Volunteer] Maybe
   education   [Education] Maybe
   award       [Award] Maybe
-  publication [Publication] Maybe
+  -- publication [Publication] Maybe
   -- skills      [Skill]
   -- languages   [Language] Maybe
   deriving Show
@@ -92,7 +101,8 @@ Award json
   awarder  Text
   summary  Text
   deriving Show
-Publication json
+Publication
+  cvId        CVId Maybe
   name        Text
   publisher   Text
   releaseDate Day
@@ -100,15 +110,15 @@ Publication json
   summary     Text
   deriving Show
 Skill
-  cvId CVId Maybe
+  cvId     CVId Maybe
   name     Text
   level    Text
   keywords [Text] Maybe
   deriving Show
 Language
   cvId CVId Maybe
-  name  Text
-  level Text
+  language  Text
+  fluency Text
   deriving Show
 Interest
   cvId CVId Maybe
@@ -181,6 +191,25 @@ instance ToJSON BasicProfile where
              , "url"      .= url
              ]
 
+instance FromJSON Publication where
+    parseJSON (Object v) = Publication <$>
+                            v .:? "cvid"       <*>
+                            v .: "name"        <*>
+                            v .: "publisher"   <*>
+                            v .: "releaseDate" <*>
+                            v .: "website"     <*>
+                            v .: "summary"
+    parseJSON _          = mzero
+
+instance ToJSON Publication where
+    toJSON (Publication _ name publisher releaseDate website summary) =
+      object [ "name"        .= name
+             , "publisher"   .= publisher
+             , "releaseDate" .= releaseDate
+             , "website"     .= website
+             , "summary"     .= summary
+             ]
+
 instance FromJSON Skill where
     parseJSON (Object v) = Skill <$>
                             v .:? "cvid" <*>
@@ -199,13 +228,13 @@ instance ToJSON Skill where
 instance FromJSON Language where
     parseJSON (Object v) = Language <$>
                             v .:? "cvid" <*>
-                            v .: "name"  <*>
-                            v .: "level"
+                            v .: "language"  <*>
+                            v .: "fluency"
     parseJSON _          = mzero
 
 instance ToJSON Language where
-    toJSON (Language _ name level) =
-      object [ "name" .= name, "level" .= level ]
+    toJSON (Language _ language fluency) =
+      object [ "language" .= language, "fluency" .= fluency ]
 
 instance FromJSON Interest where
     parseJSON (Object v) = Interest <$>
@@ -262,11 +291,16 @@ instance ToJSON Basics where
              ]
 
 data JsonResume = JsonResume { cv :: CV
-                             , basics :: Basics
-                             , skills :: [Skill]
-                             , languages :: [Language]
-                             , interests :: [Interest]
-                             , references :: [Reference]
+                             , basics       :: Basics
+--                             , work         :: [Work]
+--                             , volunteer    :: [Volunteer]
+--                             , education    :: [Education]
+--                             , award        :: [Award]
+                             , publications  :: [Publication]
+                             , skills       :: [Skill]
+                             , languages    :: [Language]
+                             , interests    :: [Interest]
+                             , references   :: [Reference]
                              } deriving (Show, Generic)
 
 instance FromJSON JsonResume
