@@ -17,6 +17,7 @@ createCV j =
           b = basic (basics j)
           bps = profiles (basics j)
           bl  = location (basics j)
+          ss  = skills j
           ls  = languages j
           is  = interests j
           rs  = references j
@@ -24,6 +25,7 @@ createCV j =
       basicKey <- createBasic cvKey b
       createBasicLocation basicKey bl
       mapM_ (createBasicProfile basicKey) bps
+      mapM_ (createSkill cvKey) ss
       mapM_ (createLanguage cvKey) ls
       mapM_ (createInterest cvKey) is
       mapM_ (createReference cvKey) rs
@@ -59,6 +61,10 @@ createBasicLocation basicKey bl =
       (basicLocationCountryCode bl)
       (basicLocationRegion bl)
 
+createSkill :: Key CV -> Skill -> SqlPersistM (Key Skill)
+createSkill cvKey l =
+    insert $ Skill (Just cvKey) (skillName l) (skillLevel l) (skillKeywords l)
+
 createLanguage :: Key CV -> Language -> SqlPersistM (Key Language)
 createLanguage cvKey l =
     insert $ Language (Just cvKey) (languageName l) (languageLevel l)
@@ -81,17 +87,20 @@ retrieveCV k =
         Just cv -> do
           b <- selectFirst [BasicCvId ==. Just cvKey] []
           b' <- retrieveBasics b
+          ss <- selectList [SkillCvId ==. Just cvKey] []
           ls <- selectList [LanguageCvId ==. Just cvKey] []
           is <- selectList [InterestCvId ==. Just cvKey] []
           rs <- selectList [ReferenceCvId ==. Just cvKey] []
-          let languages  = map entityVal ls
+          let basics     = fromJust b' -- TODO: elegant handling?
+              skills     = map entityVal ss
+              languages  = map entityVal ls
               references = map entityVal rs
               interests  = map entityVal is
-              basics     = fromJust b' -- TODO: elegant handling?
           return
             . Just
             $ JsonResume cv
                          basics
+                         skills
                          languages
                          interests
                          references
