@@ -140,8 +140,8 @@ retrieveCV k =
       case cv of
         Nothing -> return Nothing
         Just cv -> do
-          b <- selectFirst [BasicCvId ==. Just k] []
-          b' <- retrieveBasics b
+--          b <- selectFirst [BasicCvId ==. Just k] []
+--          b' <- retrieveBasics b
           ws <- selectList [WorkCvId ==. Just k] []
           vs <- selectList [VolunteerCvId ==. Just k] []
           es <- selectList [EducationCvId ==. Just k] []
@@ -150,8 +150,7 @@ retrieveCV k =
           ss <- selectList [SkillCvId ==. Just k] []
           ls <- selectList [LanguageCvId ==. Just k] []
           is <- selectList [InterestCvId ==. Just k] []
-          let basics       = fromJust b' -- TODO: elegant handling?
-              work         = map entityVal ws
+          let work         = map entityVal ws
               volunteer    = map entityVal vs
               education    = map entityVal es
               awards       = map entityVal as
@@ -159,11 +158,12 @@ retrieveCV k =
               skills       = map entityVal ss
               languages    = map entityVal ls
               interests    = map entityVal is
+          basics <- liftIO $ retrieveBasics k
           references <- liftIO $ retrieveReferences k
           return
             . Just
             $ JsonResume cv
-                         basics
+                         (fromJust basics) -- TODO: elegant handling?
                          work
                          volunteer
                          education
@@ -174,8 +174,10 @@ retrieveCV k =
                          interests
                          references
 
-retrieveBasics :: Maybe (Entity Basic) -> SqlPersistM (Maybe Basics)
-retrieveBasics b =
+retrieveBasics :: CvKey -> IO (Maybe Basics)
+retrieveBasics k =
+    runSqlite db $ do
+      b <- selectFirst [BasicCvId ==. Just k] []
       case b of
         Just basic -> do
             let bid = entityKey basic
@@ -185,7 +187,7 @@ retrieveBasics b =
               . Just
               $ Basics (entityVal basic)
                        (entityVal $ fromJust bl) -- TODO: elegant handling?
-                       (map entityVal bps)
+                       (map entityVal bps) :: SqlPersistM (Maybe Basics)
         Nothing -> return Nothing
 
 retrieveWork = undefined
@@ -202,7 +204,6 @@ retrieveReferences cvKey =
     runSqlite db $ do
       rs <- selectList [ReferenceCvId ==. Just cvKey] []
       return $ map entityVal rs :: SqlPersistM [Reference]
-
 
 -- TODO: Only updates CVs, not their fields
 updateCV :: (DbKey, CV) -> IO ()
