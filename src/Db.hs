@@ -199,8 +199,6 @@ deleteCV :: DbKey -> IO ()
 deleteCV k =
     runSqlite db (delete (CVKey k) :: SqlPersistM ())
 
--- TODO: This should probably give us a list of the ids of all our CVs, or perhaps the
--- id and name?
 listCVs :: IO [Key CV]
 listCVs = do
     es <- runSqlite db (selectList [] [] :: SqlPersistM [Entity CV])
