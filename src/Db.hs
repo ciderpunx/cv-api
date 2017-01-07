@@ -140,13 +140,11 @@ retrieveCV k =
       case cv of
         Nothing -> return Nothing
         Just cv -> do
-          as <- selectList [AwardCvId ==. Just k] []
           ps <- selectList [PublicationCvId ==. Just k] []
           ss <- selectList [SkillCvId ==. Just k] []
           ls <- selectList [LanguageCvId ==. Just k] []
           is <- selectList [InterestCvId ==. Just k] []
           let
-              awards       = map entityVal as
               publications = map entityVal ps
               skills       = map entityVal ss
               languages    = map entityVal ls
@@ -155,6 +153,7 @@ retrieveCV k =
           work <- liftIO $ retrieveWork k
           volunteer <- liftIO $ retrieveVolunteer k
           education <- liftIO $ retrieveEducation k
+          awards <- liftIO $ retrieveAwards k
           references <- liftIO $ retrieveReferences k
           return
             . Just
@@ -204,7 +203,12 @@ retrieveEducation cvKey =
       es <- selectList [EducationCvId ==. Just cvKey] []
       return $ map entityVal es :: SqlPersistM [Education]
 
-retrieveAwards = undefined
+retrieveAwards :: CvKey -> IO [Award]
+retrieveAwards cvKey =
+    runSqlite db $ do
+      as <- selectList [AwardCvId ==. Just cvKey] []
+      return $ map entityVal as :: SqlPersistM [Award]
+
 retrievePublications = undefined
 retrieveSkills = undefined
 retrieveLanguages = undefined
