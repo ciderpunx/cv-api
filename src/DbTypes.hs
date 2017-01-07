@@ -129,6 +129,7 @@ Reference
 |]
 
 type DbKey = BackendKey SqlBackend
+type CvKey = Key CV
 
 instance FromJSON Basic where
     parseJSON (Object v) = Basic <$>

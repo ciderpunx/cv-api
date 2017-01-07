@@ -40,8 +40,9 @@ newtype User = User { userName :: Text }
   deriving (Eq, Show)
 
 type PublicAPI =
-         Get '[JSON] [Key CV]
-    :<|> Capture "id" DbKey :> Get '[JSON] (Maybe JsonResume)
+         Get '[JSON] [CvKey]
+    :<|> Capture "id" CvKey :> Get '[JSON] (Maybe JsonResume)
+    :<|> Capture "id" CvKey :> "references" :> Get '[JSON] [Reference]
 
 type PrivateAPI =
           Capture "id" DbKey :> DeleteNoContent '[JSON] ()
@@ -69,6 +70,7 @@ cvServer =
   let publicAPIHandler = (
              liftIO listCVs
         :<|> liftIO . retrieveCV
+        :<|> liftIO . retrieveReferences
            )
       privateAPIHandler (user :: User) =
              liftIO . deleteCV
