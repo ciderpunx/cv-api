@@ -385,5 +385,43 @@ data JsonResume = JsonResume { cv :: CV
                              , references   :: [Reference]
                              } deriving (Show, Generic)
 
-instance FromJSON JsonResume
-instance ToJSON JsonResume
+instance FromJSON JsonResume where
+    parseJSON (Object v) =
+        JsonResume CV <$>
+             v .: "basics"       <*>
+             v .: "work"         <*>
+             v .: "volunteer"    <*>
+             v .: "education"    <*>
+             v .: "awards"       <*>
+             v .: "publications" <*>
+             v .: "skills"       <*>
+             v .: "languages"    <*>
+             v .: "interests"    <*>
+             v .: "references"
+    parseJSON _          = mzero
+
+instance ToJSON JsonResume where
+    toJSON ( JsonResume
+             cv
+             basics
+             work
+             volunteer
+             education
+             awards
+             publications
+             skills
+             languages
+             interests
+             references
+            ) =
+      object [ "basics"       .= basics
+             , "work"         .= work
+             , "volunteer"    .= volunteer
+             , "education"    .= education
+             , "awards"       .= awards
+             , "publications" .= publications
+             , "skills"       .= skills
+             , "languages"    .= languages
+             , "interests"    .= interests
+             , "references"   .= references
+             ]
