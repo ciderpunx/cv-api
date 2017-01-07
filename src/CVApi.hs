@@ -45,6 +45,7 @@ type PublicAPI =
     :<|> Capture "id" CvKey :> "basics" :> Get '[JSON] (Maybe Basics)
     :<|> Capture "id" CvKey :> "work" :> Get '[JSON] [Work]
     :<|> Capture "id" CvKey :> "volunteer" :> Get '[JSON] [Volunteer]
+    :<|> Capture "id" CvKey :> "education" :> Get '[JSON] [Education]
     :<|> Capture "id" CvKey :> "references" :> Get '[JSON] [Reference]
 
 type PrivateAPI =
@@ -76,6 +77,7 @@ cvServer =
         :<|> liftIO . retrieveBasics
         :<|> liftIO . retrieveWork
         :<|> liftIO . retrieveVolunteer
+        :<|> liftIO . retrieveEducation
         :<|> liftIO . retrieveReferences
            )
       privateAPIHandler (user :: User) =
