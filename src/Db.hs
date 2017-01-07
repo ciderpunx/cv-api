@@ -201,10 +201,10 @@ deleteCV k =
 
 -- TODO: This should probably give us a list of the ids of all our CVs, or perhaps the
 -- id and name?
-listCVs :: IO [CV]
+listCVs :: IO [Key CV]
 listCVs = do
     es <- runSqlite db (selectList [] [] :: SqlPersistM [Entity CV])
-    return (map entityVal es)
+    return (map entityKey es)
 
 migrateCVDb:: IO ()
 migrateCVDb =

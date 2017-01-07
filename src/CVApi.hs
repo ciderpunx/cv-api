@@ -40,7 +40,7 @@ newtype User = User { userName :: Text }
   deriving (Eq, Show)
 
 type PublicAPI =
-         Get '[JSON] [CV]
+         Get '[JSON] [Key CV]
     :<|> Capture "id" DbKey :> Get '[JSON] (Maybe JsonResume)
 
 type PrivateAPI =
