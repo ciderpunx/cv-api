@@ -92,6 +92,9 @@ createWork cvKey w =
               (workSummary w)
               (workHighlights w)
 
+createVolunteerIO :: CvKey -> Volunteer -> IO (Key Volunteer)
+createVolunteerIO cvKey w = runSqlite db $ createVolunteer cvKey w
+
 createVolunteer :: CvKey -> Volunteer -> SqlPersistM (Key Volunteer)
 createVolunteer cvKey v =
     insert $ Volunteer
@@ -103,6 +106,9 @@ createVolunteer cvKey v =
               (volunteerEndDate v)
               (volunteerSummary v)
               (volunteerHighlights v)
+
+createEducationIO :: CvKey -> Education -> IO (Key Education)
+createEducationIO cvKey w = runSqlite db $ createEducation cvKey w
 
 createEducation :: CvKey -> Education -> SqlPersistM (Key Education)
 createEducation cvKey e =
@@ -116,6 +122,9 @@ createEducation cvKey e =
               (educationGpa e)
               (educationCourses e)
 
+createAwardIO :: CvKey -> Award -> IO (Key Award)
+createAwardIO cvKey w = runSqlite db $ createAward cvKey w
+
 createAward :: CvKey -> Award -> SqlPersistM (Key Award)
 createAward cvKey a =
     insert $ Award
@@ -124,6 +133,9 @@ createAward cvKey a =
               (awardDate a)
               (awardAwarder a)
               (awardSummary a)
+
+createPublicationIO :: CvKey -> Publication -> IO (Key Publication)
+createPublicationIO cvKey w = runSqlite db $ createPublication cvKey w
 
 createPublication :: CvKey -> Publication -> SqlPersistM (Key Publication)
 createPublication cvKey p =
@@ -135,17 +147,29 @@ createPublication cvKey p =
               (publicationWebsite p)
               (publicationSummary p)
 
+createSkillIO :: CvKey -> Skill -> IO (Key Skill)
+createSkillIO cvKey w = runSqlite db $ createSkill cvKey w
+
 createSkill :: CvKey -> Skill -> SqlPersistM (Key Skill)
 createSkill cvKey l =
     insert $ Skill (Just cvKey) (skillName l) (skillLevel l) (skillKeywords l)
+
+createLanguageIO :: CvKey -> Language -> IO (Key Language)
+createLanguageIO cvKey w = runSqlite db $ createLanguage cvKey w
 
 createLanguage :: CvKey -> Language -> SqlPersistM (Key Language)
 createLanguage cvKey l =
     insert $ Language (Just cvKey) (languageLanguage l) (languageFluency l)
 
+createInterestIO :: CvKey -> Interest -> IO (Key Interest)
+createInterestIO cvKey w = runSqlite db $ createInterest cvKey w
+
 createInterest :: CvKey -> Interest -> SqlPersistM (Key Interest)
 createInterest cvKey i =
     insert $ Interest (Just cvKey) (interestName i) (interestKeywords i)
+
+createReferenceIO :: CvKey -> Reference -> IO (Key Reference)
+createReferenceIO cvKey w = runSqlite db $ createReference cvKey w
 
 createReference :: CvKey -> Reference -> SqlPersistM (Key Reference)
 createReference cvKey r =
