@@ -45,3 +45,6 @@ type PrivateAPI =
 type CVAPI =
           "cv" :> PublicAPI
     :<|>  "cv" :> BasicAuth "CV-API" User :> PrivateAPI
+
+cvAPI :: Proxy CVAPI
+cvAPI = Proxy

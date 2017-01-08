@@ -21,9 +21,6 @@ main = run 8081 ( serveWithContext cvAPI
                                    cvServer
                 )
 
-cvAPI :: Proxy CVAPI
-cvAPI = Proxy
-
 cvServerContext :: Context (BasicAuthCheck User : '[])
 cvServerContext = authCheck :. EmptyContext
 
@@ -57,7 +54,8 @@ cvServer =
         :<|> liftIO2 createLanguageIO
         :<|> liftIO2 createInterestIO
         :<|> liftIO2 createReferenceIO
-  in publicAPIHandler :<|> privateAPIHandler
+  in
+      publicAPIHandler :<|> privateAPIHandler
 
 liftIO2 :: MonadIO m => (a -> b -> IO c) -> a -> b -> m c
 liftIO2 f x y = liftIO $ f x y
@@ -69,4 +67,3 @@ authCheck =
         then return (Authorized (User $ E.decodeUtf8 username))
         else return Unauthorized
   in BasicAuthCheck check
-
