@@ -58,6 +58,7 @@ type PrivateAPI =
     :<|>  ReqBody '[JSON] (CvKey, CV) :> PostNoContent '[JSON] ()
     :<|>  ReqBody '[JSON] JsonResume :> Put '[JSON] CvKey
     :<|>  Capture "id" CvKey :> "basics" :> ReqBody '[JSON] Basics :> Put '[JSON] (Key Basic)
+    :<|>  Capture "id" CvKey :> "work" :> ReqBody '[JSON] Work :> Put '[JSON] (Key Work)
 
 type CVAPI =
           "cv" :> PublicAPI
@@ -77,8 +78,8 @@ cvServerContext = authCheck :. EmptyContext
 
 cvServer :: Server CVAPI
 cvServer =
-  let publicAPIHandler = (
-             liftIO listCVs
+  let publicAPIHandler =
+        (    liftIO listCVs
         :<|> liftIO . retrieveCV
         :<|> liftIO . retrieveBasics
         :<|> liftIO . retrieveWork
@@ -90,14 +91,14 @@ cvServer =
         :<|> liftIO . retrieveLanguages
         :<|> liftIO . retrieveInterests
         :<|> liftIO . retrieveReferences
-           )
+        )
       privateAPIHandler (user :: User) =
              liftIO . deleteCV
         :<|> liftIO . updateCV
         :<|> liftIO . createCV
         :<|> liftIO2 createBasicsIO
-  in publicAPIHandler
-      :<|> privateAPIHandler
+        :<|> liftIO2 createWorkIO
+  in publicAPIHandler :<|> privateAPIHandler
 
 liftIO2 :: MonadIO m => (a -> b -> IO c) -> a -> b -> m c
 liftIO2 f x y = liftIO $ f x y

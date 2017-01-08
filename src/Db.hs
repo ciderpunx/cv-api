@@ -47,7 +47,6 @@ createBasics cvKey b = do
 createBasicsIO :: CvKey -> Basics -> IO (Key Basic)
 createBasicsIO cvKey b = runSqlite db $ createBasics cvKey b
 
-
 createBasic :: CvKey -> Basic -> SqlPersistM (Key Basic)
 createBasic cvKey b =
       insert $ Basic
@@ -77,6 +76,9 @@ createBasicLocation basicKey bl =
       (basicLocationCity bl)
       (basicLocationCountryCode bl)
       (basicLocationRegion bl)
+
+createWorkIO :: CvKey -> Work -> IO (Key Work)
+createWorkIO cvKey w = runSqlite db $ createWork cvKey w
 
 createWork :: CvKey -> Work -> SqlPersistM (Key Work)
 createWork cvKey w =
