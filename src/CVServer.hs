@@ -1,36 +1,14 @@
 {-# LANGUAGE DataKinds                  #-}
-{-# LANGUAGE DeriveGeneric              #-}
-{-# LANGUAGE FlexibleContexts           #-}
-{-# LANGUAGE FlexibleInstances          #-}
-{-# LANGUAGE GADTs                      #-}
-{-# LANGUAGE MultiParamTypeClasses      #-}
-{-# LANGUAGE OverloadedStrings          #-}
-{-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ScopedTypeVariables        #-}
-{-# LANGUAGE UndecidableInstances       #-}
 
 module CVServer where
 
 import Control.Monad.Trans
-import Control.Monad.Trans.Except (ExceptT, runExceptT)
-import Database.Persist
-import Database.Persist.Sql
-import Database.Persist.Sqlite (runSqlite, runMigration)
-import Database.Persist.TH (mkPersist, mkMigrate, persistLowerCase, share, sqlSettings)
 import Data.Text (Text)
 import qualified Data.Text.Encoding as E
-import GHC.Generics (Generic)
-import Network.Wai
-import Network.Wai.Handler.Warp
+import Network.Wai.Handler.Warp (run)
 import Servant
-import Servant.API.BasicAuth (BasicAuthData (BasicAuthData))
-import Servant.API.Experimental.Auth (AuthProtect)
-import Servant.Client
-import Servant.Docs
-import Servant.Server.Experimental.Auth (AuthHandler, AuthServerData, mkAuthHandler)
-import Servant.Server.Experimental.Auth()
-import qualified Network.HTTP.Client as C
 
 import Db
 import DbTypes

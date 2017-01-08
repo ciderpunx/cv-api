@@ -1,5 +1,5 @@
-{-# LANGUAGE GADTs                      #-}
-{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE GADTs            #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 module Db where
 

@@ -16,7 +16,11 @@ cabal-version:       >=1.10
 library
   hs-source-dirs:      src
   exposed-modules:     Lib
+                     , CVServer
+  other-modules:       CVApi
                      , Db
+                     , DbTypes
+                     , PrivateAuth
   build-depends:       base >= 4.7 && < 5
                      , aeson
                      , bytestring
@@ -41,7 +45,7 @@ library
 
 executable cv-api-exe
   hs-source-dirs:      app
-  main-is:             Main.hs
+  main-is:             CVServer.hs
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
   build-depends:       base
                      , cv-api

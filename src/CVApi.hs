@@ -2,13 +2,6 @@
 {-# LANGUAGE MultiParamTypeClasses      #-}
 {-# LANGUAGE OverloadedStrings          #-}
 {-# LANGUAGE TypeOperators              #-}
--- {-# LANGUAGE ScopedTypeVariables        #-}
--- {-# LANGUAGE UndecidableInstances       #-}
--- {-# LANGUAGE DeriveGeneric              #-}
--- {-# LANGUAGE FlexibleContexts           #-}
--- {-# LANGUAGE FlexibleInstances          #-}
--- {-# LANGUAGE GADTs                      #-}
--- {-# LANGUAGE TypeFamilies               #-}
 
 module CVApi where
 
