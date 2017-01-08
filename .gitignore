@@ -2,3 +2,4 @@
 .swp
 .stack-work
 src/PrivateAuth.hs
+cv.sqlite
