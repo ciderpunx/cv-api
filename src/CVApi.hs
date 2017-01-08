@@ -54,9 +54,10 @@ type PublicAPI =
     :<|> Capture "id" CvKey :> "references" :> Get '[JSON] [Reference]
 
 type PrivateAPI =
-          Capture "id" DbKey :> DeleteNoContent '[JSON] ()
-    :<|>  ReqBody '[JSON] (DbKey, CV) :> PostNoContent '[JSON] ()
-    :<|>  ReqBody '[JSON] JsonResume :> Put '[JSON] (Key CV)
+          Capture "id" CvKey :> DeleteNoContent '[JSON] ()
+    :<|>  ReqBody '[JSON] (CvKey, CV) :> PostNoContent '[JSON] ()
+    :<|>  ReqBody '[JSON] JsonResume :> Put '[JSON] CvKey
+    :<|>  Capture "id" CvKey :> "basics" :> ReqBody '[JSON] Basics :> Put '[JSON] (Key Basic)
 
 type CVAPI =
           "cv" :> PublicAPI
@@ -94,8 +95,12 @@ cvServer =
              liftIO . deleteCV
         :<|> liftIO . updateCV
         :<|> liftIO . createCV
+        :<|> liftIO2 createBasicsIO
   in publicAPIHandler
       :<|> privateAPIHandler
+
+liftIO2 :: MonadIO m => (a -> b -> IO c) -> a -> b -> m c
+liftIO2 f x y = liftIO $ f x y
 
 authCheck :: BasicAuthCheck User
 authCheck =

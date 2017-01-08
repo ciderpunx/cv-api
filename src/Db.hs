@@ -1,4 +1,5 @@
 {-# LANGUAGE GADTs                      #-}
+{-# LANGUAGE FlexibleContexts           #-}
 
 module Db where
 
@@ -11,26 +12,41 @@ import Database.Persist.Sqlite (runSqlite, runMigration)
 
 import DbTypes
 
-createCV :: JsonResume -> IO (CvKey)
+createCV :: JsonResume -> IO CvKey
 createCV j =
     runSqlite db $ do
-      let b = basic (basics j)
-          bps = profiles (basics j)
-          bl  = location (basics j)
-      cvKey <- insert (cv j) :: SqlPersistM (CvKey)
-      basicKey <- createBasic cvKey b
-      createBasicLocation basicKey bl
-      mapM_ (createBasicProfile basicKey) bps
-      mapM_ (createWork cvKey) (work j)
-      mapM_ (createVolunteer cvKey) (volunteer j)
-      mapM_ (createEducation cvKey) (education j)
-      mapM_ (createAward cvKey) (awards j)
-      mapM_ (createPublication cvKey) (publications j)
-      mapM_ (createSkill cvKey) (skills j)
-      mapM_ (createLanguage cvKey) (languages j)
-      mapM_ (createInterest cvKey) (interests j)
-      mapM_ (createReference cvKey) (references j)
+      cvKey <- insert (cv j) :: SqlPersistM CvKey
+      createBasics cvKey              $ basics j
+      mapM_ (createWork cvKey)        $ work j
+      mapM_ (createVolunteer cvKey)   $ volunteer j
+      mapM_ (createEducation cvKey)   $ education j
+      mapM_ (createAward cvKey)       $ awards j
+      mapM_ (createPublication cvKey) $ publications j
+      mapM_ (createSkill cvKey)       $ skills j
+      mapM_ (createLanguage cvKey)    $ languages j
+      mapM_ (createInterest cvKey)    $ interests j
+      mapM_ (createReference cvKey)   $ references j
       return cvKey
+
+
+-- TODO: Decsion needed: If a basics object already exists do we:
+-- fail?
+-- silently replace existing object?
+-- silently ignore request to create new object?
+createBasics :: CvKey -> Basics -> SqlPersistM (Key Basic)
+createBasics cvKey b = do
+      basicKey <- createBasic cvKey $ basic b
+      createBasicLocation basicKey $ location b
+      mapM_ (createBasicProfile basicKey) $ profiles b
+      return basicKey
+
+-- Fucking annoyingly, we can't use a single, IO producing function
+-- to create our records (in createCV) without hitting this error, due to thread contention I think:
+-- SQLite3 returned ErrorBusy while attempting to perform step
+-- So we write a dumb wrapper for each action thus
+createBasicsIO :: CvKey -> Basics -> IO (Key Basic)
+createBasicsIO cvKey b = runSqlite db $ createBasics cvKey b
+
 
 createBasic :: CvKey -> Basic -> SqlPersistM (Key Basic)
 createBasic cvKey b =
@@ -235,14 +251,14 @@ retrieveReferences cvKey =
       return $ map entityVal rs :: SqlPersistM [Reference]
 
 -- TODO: Only updates CVs, not their fields
-updateCV :: (DbKey, CV) -> IO ()
+updateCV :: (CvKey, CV) -> IO ()
 updateCV (k, r)  =
-    runSqlite db (replace (CVKey k) r :: SqlPersistM ())
+    runSqlite db (replace k r :: SqlPersistM ())
 
 -- TODO: Only deletes CVS, not fields from them
-deleteCV :: DbKey -> IO ()
+deleteCV :: CvKey -> IO ()
 deleteCV k =
-    runSqlite db (delete (CVKey k) :: SqlPersistM ())
+    runSqlite db (delete k :: SqlPersistM ())
 
 listCVs :: IO [CvKey]
 listCVs = do
