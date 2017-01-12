@@ -29,7 +29,7 @@ type PublicAPI =
 
 type PrivateAPI =
           Capture "id" CvKey :> DeleteNoContent '[JSON] ()
-    :<|>  ReqBody '[JSON] (CvKey, CV) :> PostNoContent '[JSON] ()
+    :<|>  Capture "id" CvKey :> ReqBody '[JSON] JsonResume :> PostNoContent '[JSON] ()
     :<|>  ReqBody '[JSON] JsonResume :> Put '[JSON] CvKey
     :<|>  Capture "id" CvKey :> "basics" :> ReqBody '[JSON] Basics :> Put '[JSON] (Key Basic)
     :<|>  Capture "id" CvKey :> "work" :> ReqBody '[JSON] Work :> Put '[JSON] (Key Work)

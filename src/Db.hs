@@ -28,7 +28,6 @@ createCV j =
       mapM_ (createReference cvKey)   $ references j
       return cvKey
 
-
 -- TODO: Decsion needed: If a basics object already exists do we:
 -- fail?
 -- silently replace existing object?
@@ -277,9 +276,42 @@ retrieveReferences cvKey =
       return $ map entityVal rs :: SqlPersistM [Reference]
 
 -- TODO: Only updates CVs, not their fields
-updateCV :: (CvKey, CV) -> IO ()
-updateCV (k, r)  =
-    runSqlite db (replace k r :: SqlPersistM ())
+updateCV :: CvKey -> JsonResume -> IO ()
+updateCV cvKey r  =
+--      replace cvKey (cv r) :: SqlPersistM () -- doesn't make sense as a cv has no fields.
+    runSqlite db $ do
+--      replaceBasics cvKey              $ basics r
+        replaceWork cvKey        $ work r
+--      replaceVolunteer cvKey   $ volunteer r
+--      replaceEducation cvKey   $ education r
+--      replaceAward cvKey       $ awards r
+--      replacePublication cvKey $ publications r
+--      replaceSkill cvKey       $ skills r
+--      replaceLanguage cvKey    $ languages r
+--      replaceInterest cvKey    $ interests r
+--      replaceReference cvKey   $ references r
+--      return cvKey
+
+replaceBasics        = undefined
+replaceBasicProfile  = undefined
+replaceBasicLocation = undefined
+
+-- because we don't have access to the WorkCVId from the JSON resume,
+-- we have to delete and re-add our work items
+replaceWork :: CvKey -> [Work] -> SqlPersistM ()
+replaceWork cvKey w = do
+    deleteWhere [WorkCvId ==. Just cvKey] 
+    mapM_ (createWork cvKey) w
+
+replaceVolunteer     = undefined
+replaceEducation     = undefined
+replaceAward         = undefined
+replacePublication   = undefined
+replaceSkill         = undefined
+replaceLanguage      = undefined
+replaceInterest      = undefined
+replaceReference     = undefined
+
 
 -- TODO: Only deletes CVS, not fields from them
 deleteCV :: CvKey -> IO ()
