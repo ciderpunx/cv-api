@@ -274,44 +274,88 @@ retrieveReferences cvKey =
     runSqlite db $ do
       rs <- selectList [ReferenceCvId ==. Just cvKey] []
       return $ map entityVal rs :: SqlPersistM [Reference]
-
--- TODO: Only updates CVs, not their fields
+-- TODO: should this return the changed JSON-Resume on success rather than unit?
 updateCV :: CvKey -> JsonResume -> IO ()
 updateCV cvKey r  =
 --      replace cvKey (cv r) :: SqlPersistM () -- doesn't make sense as a cv has no fields.
     runSqlite db $ do
---      replaceBasics cvKey              $ basics r
-        replaceWork cvKey        $ work r
---      replaceVolunteer cvKey   $ volunteer r
---      replaceEducation cvKey   $ education r
---      replaceAward cvKey       $ awards r
---      replacePublication cvKey $ publications r
---      replaceSkill cvKey       $ skills r
---      replaceLanguage cvKey    $ languages r
---      replaceInterest cvKey    $ interests r
---      replaceReference cvKey   $ references r
---      return cvKey
+      bKey <- replaceBasic cvKey . basic $ basics r
+      replaceBasicProfiles bKey . profiles $ basics r
+      replaceBasicLocation bKey . location $ basics r
+      replaceWork cvKey        $ work r
+      replaceVolunteer cvKey   $ volunteer r
+      replaceEducation cvKey   $ education r
+      replaceAward cvKey       $ awards r
+      replacePublication cvKey $ publications r
+      replaceSkill cvKey       $ skills r
+      replaceLanguage cvKey    $ languages r
+      replaceInterest cvKey    $ interests r
+      replaceReference cvKey   $ references r
+      return ()
 
-replaceBasics        = undefined
-replaceBasicProfile  = undefined
-replaceBasicLocation = undefined
+-- TODO: refactor to use deletion code which I write next!
+replaceBasic :: CvKey -> Basic -> SqlPersistM (Key Basic)
+replaceBasic cvKey b = do
+    deleteWhere [BasicCvId ==. Just cvKey]
+    createBasic cvKey b
+
+replaceBasicProfiles :: Key Basic -> [BasicProfile] -> SqlPersistM ()
+replaceBasicProfiles basicKey bp = do
+    deleteWhere [BasicProfileBasicId ==. Just basicKey] 
+    mapM_ (createBasicProfile basicKey) bp
+
+replaceBasicLocation :: Key Basic -> BasicLocation -> SqlPersistM ()
+replaceBasicLocation basicKey bl = do
+    deleteWhere [BasicLocationBasicId ==. Just basicKey] 
+    _ <- createBasicLocation basicKey bl
+    return ()
 
 -- because we don't have access to the WorkCVId from the JSON resume,
 -- we have to delete and re-add our work items
 replaceWork :: CvKey -> [Work] -> SqlPersistM ()
-replaceWork cvKey w = do
+replaceWork cvKey ws = do
     deleteWhere [WorkCvId ==. Just cvKey] 
-    mapM_ (createWork cvKey) w
+    mapM_ (createWork cvKey) ws
 
-replaceVolunteer     = undefined
-replaceEducation     = undefined
-replaceAward         = undefined
-replacePublication   = undefined
-replaceSkill         = undefined
-replaceLanguage      = undefined
-replaceInterest      = undefined
-replaceReference     = undefined
+replaceVolunteer :: CvKey -> [Volunteer] -> SqlPersistM ()
+replaceVolunteer cvKey vs = do
+    deleteWhere [VolunteerCvId ==. Just cvKey]
+    mapM_ (createVolunteer cvKey) vs
 
+replaceEducation :: CvKey -> [Education] -> SqlPersistM ()
+replaceEducation cvKey es = do
+    deleteWhere [EducationCvId ==. Just cvKey] 
+    mapM_ (createEducation cvKey) es
+
+replaceAward :: CvKey -> [Award] -> SqlPersistM ()
+replaceAward cvKey w = do
+    deleteWhere [AwardCvId ==. Just cvKey] 
+    mapM_ (createAward cvKey) w
+
+replacePublication :: CvKey -> [Publication] -> SqlPersistM ()
+replacePublication cvKey ps = do
+    deleteWhere [PublicationCvId ==. Just cvKey] 
+    mapM_ (createPublication cvKey) ps
+
+replaceSkill :: CvKey -> [Skill] -> SqlPersistM ()
+replaceSkill cvKey ss = do
+    deleteWhere [SkillCvId ==. Just cvKey]
+    mapM_ (createSkill cvKey) ss
+
+replaceLanguage :: CvKey -> [Language] -> SqlPersistM ()
+replaceLanguage cvKey ls = do
+    deleteWhere [LanguageCvId ==. Just cvKey]
+    mapM_ (createLanguage cvKey) ls
+
+replaceInterest :: CvKey -> [Interest] -> SqlPersistM ()
+replaceInterest cvKey is = do
+    deleteWhere [InterestCvId ==. Just cvKey]
+    mapM_ (createInterest cvKey) is
+
+replaceReference :: CvKey -> [Reference] -> SqlPersistM ()
+replaceReference cvKey rs = do
+    deleteWhere [ReferenceCvId ==. Just cvKey]
+    mapM_ (createReference cvKey) rs
 
 -- TODO: Only deletes CVS, not fields from them
 deleteCV :: CvKey -> IO ()
