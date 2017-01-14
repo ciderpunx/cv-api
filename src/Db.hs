@@ -134,7 +134,7 @@ createAward cvKey a =
               (awardSummary a)
 
 createPublicationIO :: CvKey -> Publication -> IO (Key Publication)
-    createPublicationIO cvKey p = runSqlite db $ createPublication cvKey p
+createPublicationIO cvKey p = runSqlite db $ createPublication cvKey p
 
 createPublication :: CvKey -> Publication -> SqlPersistM (Key Publication)
 createPublication cvKey p =
@@ -310,6 +310,9 @@ replaceBasicLocation basicKey bl = do
     _ <- createBasicLocation basicKey bl
     return ()
 
+updateWork :: CvKey -> [Work] -> IO ()
+updateWork k w = runSqlite db $ replaceWork k w
+
 -- because we don't have access to the WorkCVId from the JSON resume,
 -- we have to delete and re-add our work items
 replaceWork :: CvKey -> [Work] -> SqlPersistM ()
@@ -317,40 +320,64 @@ replaceWork cvKey ws = do
     deleteWhere [WorkCvId ==. Just cvKey] 
     mapM_ (createWork cvKey) ws
 
+updateVolunteer :: CvKey -> [Volunteer] -> IO ()
+updateVolunteer k v = runSqlite db $ replaceVolunteer k v
+
 replaceVolunteer :: CvKey -> [Volunteer] -> SqlPersistM ()
 replaceVolunteer cvKey vs = do
     deleteWhere [VolunteerCvId ==. Just cvKey]
     mapM_ (createVolunteer cvKey) vs
+
+updateEducation :: CvKey -> [Education] -> IO ()
+updateEducation k e = runSqlite db $ replaceEducation k e
 
 replaceEducation :: CvKey -> [Education] -> SqlPersistM ()
 replaceEducation cvKey es = do
     deleteWhere [EducationCvId ==. Just cvKey] 
     mapM_ (createEducation cvKey) es
 
+updateAward :: CvKey -> [Award] -> IO ()
+updateAward k a = runSqlite db $ replaceAward k a
+
 replaceAward :: CvKey -> [Award] -> SqlPersistM ()
 replaceAward cvKey w = do
     deleteWhere [AwardCvId ==. Just cvKey] 
     mapM_ (createAward cvKey) w
+
+updatePublication :: CvKey -> [Publication] -> IO ()
+updatePublication k p = runSqlite db $ replacePublication k p
 
 replacePublication :: CvKey -> [Publication] -> SqlPersistM ()
 replacePublication cvKey ps = do
     deleteWhere [PublicationCvId ==. Just cvKey] 
     mapM_ (createPublication cvKey) ps
 
+updateSkill :: CvKey -> [Skill] -> IO ()
+updateSkill k s = runSqlite db $ replaceSkill k s
+
 replaceSkill :: CvKey -> [Skill] -> SqlPersistM ()
 replaceSkill cvKey ss = do
     deleteWhere [SkillCvId ==. Just cvKey]
     mapM_ (createSkill cvKey) ss
+
+updateLanguage :: CvKey -> [Language] -> IO ()
+updateLanguage k l = runSqlite db $ replaceLanguage k l
 
 replaceLanguage :: CvKey -> [Language] -> SqlPersistM ()
 replaceLanguage cvKey ls = do
     deleteWhere [LanguageCvId ==. Just cvKey]
     mapM_ (createLanguage cvKey) ls
 
+updateInterest :: CvKey -> [Interest] -> IO ()
+updateInterest k i = runSqlite db $ replaceInterest k i
+
 replaceInterest :: CvKey -> [Interest] -> SqlPersistM ()
 replaceInterest cvKey is = do
     deleteWhere [InterestCvId ==. Just cvKey]
     mapM_ (createInterest cvKey) is
+
+updateReference :: CvKey -> [Reference] -> IO ()
+updateReference k r = runSqlite db $ replaceReference k r
 
 replaceReference :: CvKey -> [Reference] -> SqlPersistM ()
 replaceReference cvKey rs = do
