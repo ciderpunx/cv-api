@@ -30,6 +30,16 @@ type PublicAPI =
 type PrivateAPI =
           Capture "id" CvKey :> DeleteNoContent '[JSON] ()
     :<|>  Capture "id" CvKey :> ReqBody '[JSON] JsonResume :> PostNoContent '[JSON] ()
+--    :<|>  Capture "id" CvKey :> "basics" :> ReqBody '[JSON] Basics :> PostNoContent '[JSON] ()
+    :<|>  Capture "id" CvKey :> "work" :> ReqBody '[JSON] [Work] :> PostNoContent '[JSON] ()
+    :<|>  Capture "id" CvKey :> "volunteer" :> ReqBody '[JSON] [Volunteer] :> PostNoContent '[JSON] ()
+    :<|>  Capture "id" CvKey :> "education" :> ReqBody '[JSON] [Education] :> PostNoContent '[JSON] ()
+    :<|>  Capture "id" CvKey :> "awards" :> ReqBody '[JSON] [Award] :> PostNoContent '[JSON] ()
+    :<|>  Capture "id" CvKey :> "publications" :> ReqBody '[JSON] [Publication] :> PostNoContent '[JSON] ()
+    :<|>  Capture "id" CvKey :> "skills" :> ReqBody '[JSON] [Skill] :> PostNoContent '[JSON] ()
+    :<|>  Capture "id" CvKey :> "languages" :> ReqBody '[JSON] [Language] :> PostNoContent '[JSON] ()
+    :<|>  Capture "id" CvKey :> "interests" :> ReqBody '[JSON] [Interest] :> PostNoContent '[JSON] ()
+    :<|>  Capture "id" CvKey :> "references" :> ReqBody '[JSON] [Reference] :> PostNoContent '[JSON] ()
     :<|>  ReqBody '[JSON] JsonResume :> Put '[JSON] CvKey
     :<|>  Capture "id" CvKey :> "basics" :> ReqBody '[JSON] Basics :> Put '[JSON] (Key Basic)
     :<|>  Capture "id" CvKey :> "work" :> ReqBody '[JSON] Work :> Put '[JSON] (Key Work)
