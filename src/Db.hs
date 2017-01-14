@@ -293,6 +293,13 @@ updateCV cvKey r  =
       replaceReference cvKey   $ references r
       return ()
 
+updateBasics :: CvKey -> Basics -> IO ()
+updateBasics k b =
+    runSqlite db $ do
+      bKey <- replaceBasic k $ basic b
+      replaceBasicProfiles bKey $ profiles b
+      replaceBasicLocation bKey $ location b
+
 -- TODO: refactor to use deletion code which I write next!
 replaceBasic :: CvKey -> Basic -> SqlPersistM (Key Basic)
 replaceBasic cvKey b = do

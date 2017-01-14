@@ -43,7 +43,7 @@ cvServer =
       privateAPIHandler (user :: User) =
              liftIO . deleteCV
         :<|> liftIO2 updateCV
---        :<|> liftIO2 updateBasics
+        :<|> liftIO2 updateBasics
         :<|> liftIO2 updateWork
         :<|> liftIO2 updateVolunteer
         :<|> liftIO2 updateEducation
