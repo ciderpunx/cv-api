@@ -8,8 +8,6 @@
 {-# LANGUAGE QuasiQuotes                #-}
 {-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TypeFamilies               #-}
---{-# LANGUAGE TypeOperators              #-}
---{-# LANGUAGE FlexibleContexts           #-}
 
 module DbTypes where
 
